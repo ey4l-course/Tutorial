@@ -20,10 +20,10 @@ public class Transaction {
     public Transaction(int id, LocalDate txnTime, String description, BigDecimal amount, String category, String comment) {
         this.id = id;
         this.txnTime = txnTime;
-        this.description = description;
+        this.description = description.toLowerCase();
         this.amount = amount;
-        this.category = category;
-        this.comment = comment;
+        this.category = category.toLowerCase();
+        this.comment = comment.toLowerCase();
     }
 
     public int getId() {
@@ -55,7 +55,7 @@ public class Transaction {
     }
 
     public void setCategory(String category) {
-        this.category = category;
+        this.category = category.toLowerCase();
     }
 
     public String getComment() {
@@ -63,7 +63,7 @@ public class Transaction {
     }
 
     public void setComment(String comment) {
-        this.comment = comment;
+        this.comment = comment.toLowerCase();
     }
 
     public String getDescription() {
@@ -71,7 +71,7 @@ public class Transaction {
     }
 
     public void setDescription(String description) {
-        this.description = description;
+        this.description = description.toLowerCase();
     }
 
     @Override

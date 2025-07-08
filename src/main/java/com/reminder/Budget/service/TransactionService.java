@@ -5,6 +5,7 @@ import com.reminder.Budget.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -14,13 +15,13 @@ import java.util.List;
 public class TransactionService {
     @Autowired
     private TransactionRepository transactionRepository;
+    private Transaction transaction;
 
     public void newTransaction (Transaction transaction){
         transaction.setAmount(transaction.getAmount().setScale(2, RoundingMode.HALF_DOWN));
         validateFields(transaction);
         transaction.setTxnTime(LocalDate.now());
         transactionRepository.save(transaction);
-        //TODO: handle exceptions
     }
 
     public void addComment (int id, String comment){
@@ -36,6 +37,7 @@ public class TransactionService {
     }
 
     public List<Transaction> getTxnPerCategory (String category){
+        category = inputLowerCaser(category);
         return transactionRepository.getTxnPerCategory(category);
     }
 
@@ -49,12 +51,16 @@ public class TransactionService {
         if (transaction.getAmount() == null || transaction.getAmount().compareTo(BigDecimal.ZERO) == 0)
             throw new IllegalArgumentException("Amount cannot be empty or 0");
         if (transaction.getAmount().movePointRight(2).toBigInteger().toString().length() > 12)
-            throw new IllegalArgumentException("Amount is out of range" + transaction.getAmount());
+            throw new IllegalArgumentException("Amount is out of range " + transaction.getAmount());
         if (transaction.getDescription().length() > 20)
             throw new IllegalArgumentException("Field description too long (>20)");
         if (transaction.getCategory().length() > 10)
             throw new IllegalArgumentException("Field category too long (>10)");
         if (transaction.getComment().length() > 50)
             throw new IllegalArgumentException("Field comment too long (>50)");
+    }
+
+    private String inputLowerCaser (String str){
+        return str.toLowerCase();
     }
 }

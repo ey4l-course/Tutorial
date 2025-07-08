@@ -2,6 +2,7 @@ package com.reminder.Budget.controller;
 
 import com.reminder.Budget.model.Transaction;
 import com.reminder.Budget.service.TransactionService;
+import com.reminder.Budget.utilities.LogUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +20,11 @@ public class TransactionController {
             transactionService.newTransaction(transaction);
             return new ResponseEntity<>(HttpStatus.OK);
         }catch (IllegalArgumentException e){
-            System.out.println(e); //TODO: add proper logging
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage()); //TODO: return a more fade message. suspected request manipulation.
+            String uuid = LogUtil.infoLog("User", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please ensure parameters. log ID: " + uuid); //UI should eliminate such instances so likely cause by misuse or threat actor
         }catch (Exception e){
-            System.out.println(e); //TODO: add proper logging
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            String uuid = LogUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
 
@@ -34,12 +35,12 @@ public class TransactionController {
         try {
             transactionService.addComment(id, comment);
             return new ResponseEntity<>(HttpStatus.OK);
-        }catch (IllegalArgumentException e){
-            System.out.println(e); //TODO: add proper logging
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage()); //TODO: return a more fade message. suspected request manipulation.
+        }catch (IllegalArgumentException e) {
+            String uuid = LogUtil.infoLog("User", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please ensure parameters. log ID: " + uuid); //UI should eliminate such instances so likely cause by misuse or threat actor        }catch (Exception e){
         }catch (Exception e){
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            String uuid = LogUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
 
@@ -51,11 +52,11 @@ public class TransactionController {
             transactionService.changeCategory(id, category);
             return new ResponseEntity<>(HttpStatus.OK);
         }catch (IllegalArgumentException e){
-            System.out.println(e); //TODO: add proper logging
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage()); //TODO: return a more fade message. suspected request manipulation.
+            String uuid = LogUtil.infoLog("User", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please ensure parameters. log ID: " + uuid); //UI should eliminate such instances so likely cause by misuse or threat actor
         }catch (Exception e){
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            String uuid = LogUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
 
@@ -64,8 +65,8 @@ public class TransactionController {
         try {
             return ResponseEntity.status(HttpStatus.OK).body(transactionService.getTxnPerCategory(category));
         }catch (Exception e){
-            System.out.println(e); //TODO: add proper logging
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            String uuid = LogUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
     @GetMapping
@@ -73,8 +74,8 @@ public class TransactionController {
         try {
             return ResponseEntity.status(HttpStatus.OK).body(transactionService.getAllTransactions());
         }catch (Exception e){
-            System.out.println(e); //TODO: add proper logging
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            String uuid = LogUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
 }

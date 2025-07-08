@@ -34,7 +34,6 @@ public class TransactionRepository {
                 ps.setString(5, transaction.getComment());
                 return ps;
             }, keyHolder);
-        //TODO: handle exceptions
     }
 
     public void addComment (int id, String comment){

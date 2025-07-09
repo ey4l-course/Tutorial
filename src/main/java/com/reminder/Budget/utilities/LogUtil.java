@@ -15,7 +15,7 @@ Exceptions that imply misuse or user errors are logged as info and may be integr
 
 @Component
 public class LogUtil {
-    public static String error (Exception e){
+    public String error (Exception e){
         String uuid = UUID.randomUUID().toString();
         StackTraceElement origin = Arrays.stream(e.getStackTrace())
                 .filter(frame -> frame.getClassName().startsWith("com.reminder"))
@@ -27,7 +27,7 @@ public class LogUtil {
         return uuid;
     }
 
-    public static String infoLog (String user, String msg){
+    public String infoLog (String user, String msg){
         String uuid = UUID.randomUUID().toString();
         Logger logger = LoggerFactory.getLogger("[INFO]");
         logger.info(String.format("%s,User:%s,%s", uuid, user, msg));

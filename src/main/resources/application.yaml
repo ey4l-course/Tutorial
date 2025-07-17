@@ -4,6 +4,9 @@ server:
 app:
   tables:
     transactions: transactions_table
+    usersDetails: user_crm
+    UsersCredentials: user_login
+    commonIpAddresses: common_ip
 
 spring:
   datasource:
@@ -33,3 +36,10 @@ logging:
     name: logs/Application.log
     max-size: 10MB
     max-history: 30
+
+jwt:
+  secret: temporary-secret-key-for-dev
+  access:
+    expiration: 90000 # 15 minutes
+  refresh:
+    expiration: 7200000 # 2 hours

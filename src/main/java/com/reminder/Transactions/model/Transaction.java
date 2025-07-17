@@ -1,4 +1,4 @@
-package com.reminder.Budget.model;
+package com.reminder.Transactions.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

@@ -1,17 +1,15 @@
-package com.reminder.Budget.repository;
+package com.reminder.Transactions.repository;
 
-import com.reminder.Budget.model.Transaction;
-import com.reminder.Budget.repository.mapper.TransactionMapper;
+import com.reminder.Transactions.model.Transaction;
+import com.reminder.Transactions.repository.mapper.TransactionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
-import java.util.Date;
 import java.util.List;
 
 @Repository

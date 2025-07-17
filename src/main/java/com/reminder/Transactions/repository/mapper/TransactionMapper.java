@@ -1,6 +1,6 @@
-package com.reminder.Budget.repository.mapper;
+package com.reminder.Transactions.repository.mapper;
 
-import com.reminder.Budget.model.Transaction;
+import com.reminder.Transactions.model.Transaction;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;

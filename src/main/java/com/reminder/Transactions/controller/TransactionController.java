@@ -1,8 +1,8 @@
-package com.reminder.Budget.controller;
+package com.reminder.Transactions.controller;
 
-import com.reminder.Budget.model.Transaction;
-import com.reminder.Budget.service.TransactionService;
-import com.reminder.Budget.utilities.LogUtil;
+import com.reminder.Transactions.model.Transaction;
+import com.reminder.Transactions.service.TransactionService;
+import com.reminder.utilities.LogUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.reminder.Budget.utilities;
+package com.reminder.utilities;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +31,13 @@ public class LogUtil {
         String uuid = UUID.randomUUID().toString();
         Logger logger = LoggerFactory.getLogger("[INFO]");
         logger.info(String.format("%s,User:%s,%s", uuid, user, msg));
+        return uuid;
+    }
+
+    public String securityLog (String msg){
+        String uuid = UUID.randomUUID().toString();
+        Logger logger = LoggerFactory.getLogger("[SECURITY]");
+        logger.info(msg);
         return uuid;
     }
 }

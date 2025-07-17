@@ -1,4 +1,4 @@
-package com.reminder.Budget;
+package com.reminder.Transactions;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

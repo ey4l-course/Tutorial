@@ -1,4 +1,4 @@
-package com.reminder.Budget;
+package com.reminder.Transactions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

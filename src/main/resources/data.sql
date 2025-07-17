@@ -7,33 +7,32 @@ CREATE TABLE transactions_table (
     comment VARCHAR(50)
 );
 
-INSERT INTO transactions_table (txn_time, description, amount, category, comment) VALUES
-('2025-06-01', 'shufersal tlv', 182.40, 'food', 'groceries for the week'),
-('2025-06-02', 'netflix.com', 38.90,  'leisure', 'monthly subscription'),
-('2025-06-04', 'clal insurance', 129.50,  'health', 'supplementary health plan'),
-('2025-06-06', 'cafe greg', 28.00,  'food', 'coffee and pastry'),
-('2025-06-08', 'egged bus jerusalem', 9.60, 'transport', 'work commute'),
-('2025-06-09', 'steimatzky online', 54.90, 'education', 'finance book'),
-('2025-06-10', 'coursera.org', 210.00, 'education', 'online course fee'),
-('2025-06-12', 'wolt*pizza hut', 76.30, 'food', 'dinner delivery'),
-('2025-06-14', 'hot mobile', 65.90, 'utilities', 'cell phone plan'),
-('2025-06-15', 'yes planet', 47.00, 'leisure', 'movie night'),
-('2025-06-03', 'super-pharm tel aviv', 42.70, 'health', 'vitamins and shampoo'),
-('2025-06-04', 'shufersal express', 95.30, 'food', 'milk, bread, eggs'),
-('2025-06-04', 'gett taxi', 32.80, 'transport', 'trip to meeting'),
-('2025-06-05', 'kinneret water', 112.00, 'utilities', 'monthly water bill'),
-('2025-06-06', 'azrieli mall', 320.00, 'leisure', 'clothes shopping'),
-('2025-06-08', 'wolt*sushi place', 98.00, 'food', 'sunday dinner'),
-('2025-06-09', 'cal credit card', 24.90, 'utilities', 'sms alerts service'),
-('2025-06-10', 'haaretz online', 39.90, 'education', 'digital newspaper'),
-('2025-06-11', 'aroma espresso bar', 26.50, 'food', 'coffee and sandwich'),
-('2025-06-12', 'gett taxi', 45.00, 'transport', 'ride to train station'),
-('2025-06-13', 'zap.co.il', 149.00, 'leisure', 'bluetooth headphones'),
-('2025-06-14', 'shufersal tlv', 134.20, 'food', 'shabbat groceries'),
-('2025-06-15', 'kupat holim', 85.00, 'health', 'co-pay doctor visit'),
-('2025-06-15', 'steimatzky online', 29.90, 'education', 'ebook purchase'),
-('2025-06-16', 'train to haifa', 26.00, 'transport', 'intercity travel'),
-('2025-06-16', 'bezeq international', 102.50, 'utilities', 'internet service'),
-('2025-06-17', 'cafe cafe', 33.00, 'food', 'light lunch'),
-('2025-06-17', 'spotify.com', 19.90, 'leisure', 'music subscription'),
-('2025-06-17', 'book depository', 88.40, 'education', 'economics textbook');
+CREATE TABLE user_crm (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    given_name VARCHAR(20) NOT NULL,
+    surname VARCHAR(20) NOT NULL,
+    email_address VARCHAR(40) UNIQUE,
+    mobile VARCHAR(15) UNIQUE,
+    service_level INT DEFAULT 1,
+    last_seen TIMESTAMP NOT NULL
+);
+
+CREATE TABLE user_login (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    user_name VARCHAR(20) UNIQUE NOT NULL,
+    hashed_password VARCHAR(100) NOT NULL,
+    is_admin BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES user_crm(id)
+);
+
+CREATE TABLE common_ip (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    last_seen TIMESTAMP NOT NULL,
+    usage_count INT DEFAULT 1,
+    is_sus BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY user_id REFERENCES user_crm(id)
+);

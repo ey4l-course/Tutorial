@@ -1,11 +1,10 @@
-package com.reminder.Budget.service;
+package com.reminder.Transactions.service;
 
-import com.reminder.Budget.model.Transaction;
-import com.reminder.Budget.repository.TransactionRepository;
+import com.reminder.Transactions.model.Transaction;
+import com.reminder.Transactions.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;

@@ -73,7 +73,7 @@ public class JwtUtil {
                 .parseSignedClaims(jwtToken);
     }
 
-    private boolean validateJwtToken (String jwtToken){
+    public boolean validateJwtToken (String jwtToken){
         return !isTokenExpired(jwtToken);
     }
 

@@ -22,7 +22,7 @@ CREATE TABLE user_login (
     user_id BIGINT NOT NULL,
     user_name VARCHAR(20) UNIQUE NOT NULL,
     hashed_password VARCHAR(100) NOT NULL,
-    is_admin BOOLEAN DEFAULT FALSE,
+    role VARCHAR(10) NOT NULL,
     is_active BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES user_crm(id)
 );

@@ -43,3 +43,6 @@ jwt:
     expiration: 90000 # 15 minutes
   refresh:
     expiration: 7200000 # 2 hours
+  header:
+    authHeader: Authorization
+    prefix: Bearer

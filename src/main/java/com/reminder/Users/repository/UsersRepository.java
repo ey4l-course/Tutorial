@@ -37,6 +37,11 @@ public class UsersRepository {
         }
     }
 
+    public UserLogin getUserByUserName (String userName){
+        String sql = String.format("SELECT * FROM %s WHERE user_name = ?", LOGIN);
+        return jdbcTemplate.queryForObject(sql, UserLogin.class, userName);
+    }
+
     public void logNewIp(IpAddress ip) {
         LocalDateTime timeNow = LocalDateTime.now();
         String sql;

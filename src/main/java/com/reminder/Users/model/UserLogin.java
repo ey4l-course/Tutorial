@@ -20,8 +20,15 @@ public class UserLogin {
     @NotNull
     @Column (name = "hashed_password", nullable = false)
     private String hashedPassword;
-    @Column (name = "is_admin")
-    private boolean isAdmin;
+    @NotNull
+    @Column (name = "role", nullable = false)
+    private String role;
+    /*
+    Roles:
+    user - may perform actions on their own account
+    admin - may perform actions on all accounts
+    app - applicative user (siem/elk agent)
+     */
     @Column (name = "is_active")
     private boolean isActive;
 
@@ -68,12 +75,12 @@ public class UserLogin {
         isActive = active;
     }
 
-    public boolean isAdmin() {
-        return isAdmin;
+    public String getRole() {
+        return role;
     }
 
-    public void setAdmin(boolean admin) {
-        isAdmin = admin;
+    public void setRole(String role) {
+        this.role = role;
     }
 
     @Override
@@ -83,7 +90,7 @@ public class UserLogin {
                 ", userId='" + userId + '\'' +
                 ", userName='" + userName + '\'' +
                 ", hashedPassword='" + hashedPassword + '\'' +
-                ", isAdmin='" + isAdmin +'\'' +
+                ", role='" + role +'\'' +
                 ", isActive=" + isActive +
                 '}';
     }

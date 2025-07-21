@@ -20,8 +20,8 @@ public class JwtUtil {
     private final Long REFRESHEXPIRY;
 
     public JwtUtil (@Value("${jwt.secret}") String SECRET,
-                    @Value("${jwt.access.expiry}") Long ACCESSEXPIRY,
-                    @Value("${jwt.refresh.expiry}") Long REFRESHEXPIRY){
+                    @Value("${jwt.access.expiration}") Long ACCESSEXPIRY,
+                    @Value("${jwt.refresh.expiration}") Long REFRESHEXPIRY){
         this.SECRET = SECRET;
         this.ACCESSEXPIRY = ACCESSEXPIRY;
         this.REFRESHEXPIRY = REFRESHEXPIRY;
@@ -31,11 +31,11 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    public String generateJwtToken (String userName, boolean isAdmin){
+    public String generateJwtToken (String userName, String role){
         Map<String, Object> claims = new HashMap<>();
         return Jwts.builder()
                 .claims(claims)
-                .claim("role", isAdmin ? "admin" : "user")
+                .claim("role", role)
                 .subject(userName)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + ACCESSEXPIRY))
@@ -70,7 +70,8 @@ public class JwtUtil {
         return (Claims) Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
-                .parseSignedClaims(jwtToken);
+                .parseSignedClaims(jwtToken)
+                .getPayload();
     }
 
     public boolean validateJwtToken (String jwtToken){

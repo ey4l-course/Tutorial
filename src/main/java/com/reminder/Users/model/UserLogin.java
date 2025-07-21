@@ -1,5 +1,6 @@
 package com.reminder.Users.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -10,8 +11,7 @@ public class UserLogin {
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id;
-    @NotNull
-    @Column (name = "user_id", nullable = false, unique = true)
+    @Column (name = "user_id", unique = true)
     private Long userId;
     @NotNull
     @Size (min = 5, max = 20)
@@ -19,6 +19,7 @@ public class UserLogin {
     private String userName;
     @NotNull
     @Column (name = "hashed_password", nullable = false)
+    @JsonProperty("password")
     private String hashedPassword;
     @NotNull
     @Column (name = "role", nullable = false)

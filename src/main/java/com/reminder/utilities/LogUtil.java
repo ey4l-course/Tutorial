@@ -23,7 +23,7 @@ public class LogUtil {
                 .orElse(e.getStackTrace()[0]);
         String originStr = origin.getClassName() + ":" + origin.getMethodName() + "() at line: " + origin.getLineNumber();
         Logger logger = LoggerFactory.getLogger("[ERROR]");
-        logger.error(String.format("%s,Unexpected error occurred at: %s; Cause: %s", uuid, originStr, e.getMessage()));
+        logger.error(String.format("%s,Unexpected error occurred at: %s; Cause: %s\n%s", uuid, originStr, e.getMessage(), e));
         return uuid;
     }
 

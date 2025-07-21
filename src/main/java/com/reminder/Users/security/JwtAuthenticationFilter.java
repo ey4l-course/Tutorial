@@ -1,6 +1,5 @@
 package com.reminder.Users.security;
 
-import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.utilities.JwtUtil;
 import com.reminder.utilities.LogUtil;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -28,10 +27,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     CustomUserDetailService userDetailService;
 
-    @Value("${app.jwt.header.authHeader}")
+    @Value("${jwt.header.authHeader}")
     private String HEADER;
 
-    @Value("${app.jwt.header.prefix}")
+    @Value("${jwt.header.prefix}")
     private String PREFIX;
 
     @Override
@@ -42,11 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith(PREFIX)) {
             jwt = authHeader.substring(PREFIX.length());
+            System.out.println("JWT is " + jwt);
             try {
                 userName = jwtUtil.extractUserName(jwt);
             } catch (ExpiredJwtException e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Token expired");
+                return;
             } catch (Exception e) {
                 String uuid = logUtil.error(e);
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

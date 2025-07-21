@@ -1,5 +1,6 @@
 package com.reminder.Users.utilities;
 
+
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -8,7 +9,7 @@ public class IpResolver {
     public static String normalizeIp (String ip){
         try {
             InetAddress inetAddress = InetAddress.getByName(ip);
-            System.out.println(inetAddress.toString());
+            System.out.println("this should print inetAddress.toString(): " + inetAddress.toString());
             if (inetAddress instanceof Inet6Address){
                 byte[] addr = inetAddress.getAddress();
                 if (isIpv4(addr)){
@@ -24,6 +25,9 @@ public class IpResolver {
         }catch (UnknownHostException e){
             System.out.println("IP resolver failed" + e.getMessage());
             return ip;
+        }catch (Exception e){
+            System.out.println("IP resolver failed" + e.getMessage());
+            return "No IP was recognized";
         }
     }
 

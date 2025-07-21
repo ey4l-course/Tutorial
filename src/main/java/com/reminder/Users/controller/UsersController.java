@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -45,10 +46,14 @@ public class UsersController {
         }
     }
 
-    public ResponseEntity<?> newUserDetails (@RequestBody UserCrm userCrm){ //TODO: require token
+    @PreAuthorize("hasRole('user')")
+    @PostMapping("/activate")
+    public ResponseEntity<?> newUserDetails (@RequestBody UserCrm userCrm){
         try {
             usersService.newUserActivation(userCrm);
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body("User saved");
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("message", "account activated"));
+        }catch (IllegalArgumentException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }catch (Exception e){
             String uuid = logUtil.error(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);

@@ -19,7 +19,7 @@ CREATE TABLE user_crm (
 
 CREATE TABLE user_login (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
+    user_id BIGINT,
     user_name VARCHAR(20) UNIQUE NOT NULL,
     hashed_password VARCHAR(100) NOT NULL,
     role VARCHAR(10) NOT NULL,
@@ -34,5 +34,5 @@ CREATE TABLE common_ip (
     last_seen TIMESTAMP NOT NULL,
     usage_count INT DEFAULT 1,
     is_sus BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY user_id REFERENCES user_crm(id)
+    FOREIGN KEY (user_id) REFERENCES user_login(id)
 );

@@ -38,11 +38,11 @@ logging:
     max-history: 30
 
 jwt:
-  secret: temporary-secret-key-for-dev
+  secret: temporary-secret-key-for-dev-additional-length-to-get-to-256-bit
   access:
     expiration: 90000 # 15 minutes
   refresh:
     expiration: 7200000 # 2 hours
   header:
     authHeader: Authorization
-    prefix: Bearer
+    prefix: "Bearer "

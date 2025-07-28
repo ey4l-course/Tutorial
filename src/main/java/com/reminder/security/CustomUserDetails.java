@@ -1,4 +1,4 @@
-package com.reminder.Users.security;
+package com.reminder.security;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

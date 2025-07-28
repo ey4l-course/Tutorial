@@ -59,7 +59,7 @@ public class UsersRepository {
         String sql = String.format("SELECT * FROM %s WHERE user_name = ?", LOGIN);
         List<UserLogin> list = jdbcTemplate.query(sql, new UserLoginMapper(), userName);
         if (list.size() != 1)
-            throw new IllegalStateException("Expected exactly one user, but found" + list.size());
+            throw new IllegalStateException("Expected exactly one user, but found " + list.size());
         return list.get(0);
     }
 

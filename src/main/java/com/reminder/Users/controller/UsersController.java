@@ -1,5 +1,6 @@
 package com.reminder.Users.controller;
 
+import com.reminder.Users.model.AuthResponseDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.service.UsersService;
@@ -13,6 +14,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -33,8 +35,10 @@ public class UsersController {
                     String ipAddress = (xForwardedFor != null && !xForwardedFor.isEmpty()
                     ? xForwardedFor.split(",")[0].trim()
                     : request.getRemoteAddr());
-            String token = usersService.newUser(userLogin, ipAddress);
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "user created", "token", token));
+            HashMap<String,String> response = usersService.newUser(userLogin, ipAddress);
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "user created",
+                    "accessToken", response.get("accessToken"),
+                    "refreshToken", response.get("refreshToken")));
         }catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }catch (AccessDeniedException e){

@@ -44,5 +44,9 @@ jwt:
   refresh:
     expiration: 7200000 # 2 hours
   header:
-    authHeader: Authorization
+    accessHeader: Authorization
+    refreshHeader: Refresh
     prefix: "Bearer "
+  excludedPaths:
+    - "/h2-console/**"
+    - "/auth"

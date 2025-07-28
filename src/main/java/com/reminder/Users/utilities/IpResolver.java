@@ -9,7 +9,6 @@ public class IpResolver {
     public static String normalizeIp (String ip){
         try {
             InetAddress inetAddress = InetAddress.getByName(ip);
-            System.out.println("this should print inetAddress.toString(): " + inetAddress.toString());
             if (inetAddress instanceof Inet6Address){
                 byte[] addr = inetAddress.getAddress();
                 if (isIpv4(addr)){

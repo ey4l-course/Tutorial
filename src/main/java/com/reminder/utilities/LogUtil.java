@@ -34,6 +34,11 @@ public class LogUtil {
         return uuid;
     }
 
+    public void criticalLog (String msg){
+        Logger logger = LoggerFactory.getLogger("[CRITICAL]");
+        logger.error(""); //TODO: complete method - find out how to log fatal
+    }
+
     public String securityLog (String msg){
         String uuid = UUID.randomUUID().toString();
         Logger logger = LoggerFactory.getLogger("[SECURITY]");

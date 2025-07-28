@@ -4,7 +4,7 @@ import com.reminder.Users.model.IpAddress;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.repository.UsersRepository;
-import com.reminder.Users.security.CustomUserDetails;
+import com.reminder.security.CustomUserDetails;
 import com.reminder.Users.utilities.IpResolver;
 import com.reminder.Users.utilities.JwtUtil;
 import jakarta.transaction.Transactional;
@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.regex.Pattern;
 
 @Service
@@ -31,7 +32,7 @@ public class UsersService {
     final private Pattern validUserName = Pattern.compile("^(?!.*( )\1)[a-zA-Z0-9 ._\\-$^~]{5,20}$");
     final private Pattern validPassword = Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[-!@#$%^&*()_./]).{8,}$");
 
-    public String newUser (UserLogin userCredentials, String ipAddress){
+    public HashMap<String,String> newUser (UserLogin userCredentials, String ipAddress){
         //Every method either throws an exception or succeeds
         ipAddress = IpResolver.normalizeIp(ipAddress);
         usersRepository.isIpSus(ipAddress);
@@ -40,7 +41,10 @@ public class UsersService {
         userCredentials.setRole("user");
         Long userId = usersRepository.save(userCredentials);
         usersRepository.logNewIp(new IpAddress(userId, ipAddress));
-        return jwtUtil.generateJwtToken(userCredentials.getUserName(), userCredentials.getRole());
+        HashMap<String,String> response = new HashMap<>();
+        response.put("accessToken", jwtUtil.generateJwtToken(userCredentials.getUserName(), userCredentials.getRole()));
+        response.put("refreshToken", jwtUtil.generateRefreshToken(userCredentials.getUserName(), userCredentials.getRole()));
+        return response;
     }
 
     @Transactional

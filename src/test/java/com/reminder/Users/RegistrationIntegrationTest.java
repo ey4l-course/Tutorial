@@ -1,6 +1,7 @@
 package com.reminder.Users;
 
 import com.jayway.jsonpath.JsonPath;
+import com.reminder.JwtConfig;
 import com.reminder.Users.model.IpAddress;
 import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.repository.UsersRepository;
@@ -13,15 +14,21 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultHandler;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,8 +43,6 @@ public class RegistrationIntegrationTest {
     JdbcTemplate jdbc;
     @Autowired
     BCryptPasswordEncoder encoder;
-    @Autowired
-    JwtUtil jwtUtil;
 
     @BeforeEach
     void resetTestDb() {
@@ -64,7 +69,8 @@ public class RegistrationIntegrationTest {
                 }))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("user created"))
-                .andExpect(jsonPath("$.token").isNotEmpty());
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
 
         UserLogin savedUser = repo.getUserByUserName("ValidUser12");
         assertNotNull(savedUser);
@@ -89,7 +95,9 @@ public class RegistrationIntegrationTest {
         String Ipv6mappedIPv4 = "::ffff:10.12.1.145";
         String loginBody = "{\"userName\":\"ValidUser12\"," +
                 "\"password\":\"V@lidPa$$w0rd\"}";
-        String jwt;
+        String accessToken;
+        String refreshToken;
+
         String[] crmBody = {
                 "{\"givenName\":\"J0hn\", \"surname\":\"Doe\", \"email\":\"johndoe@yahoo.com\", \"mobile\":\"12125551218\"}",
                 "{\"givenName\":\"John\", \"surname\":\"Do$e\", \"email\":\"johndoe@yahoo.com\", \"mobile\":\"12125551218\"}",
@@ -104,59 +112,154 @@ public class RegistrationIntegrationTest {
                     request.setRemoteAddr(Ipv6mappedIPv4);
                     return request;
                 }))
-                .andDo(print())
                 .andReturn();
-        jwt = JsonPath.read(result.getResponse().getContentAsString(), "$.token");
+        accessToken = JsonPath.read(result.getResponse().getContentAsString(), "$.accessToken");
+        refreshToken = JsonPath.read(result.getResponse().getContentAsString(), "$.refreshToken");
 
         for (String user : crmBody){
             mockMvc.perform(post("/auth/activate")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(user)
                     .with(request -> {
-                        request.addHeader("Authorization", "Bearer " + jwt);
+                        request.addHeader("Authorization", "Bearer " + accessToken);
+                        request.addHeader("Refresh", "Bearer " + refreshToken);
                         return request;
                     }))
-                    .andExpect(status().isBadRequest())
-                    .andDo(print());
+                    .andExpect(status().isBadRequest());
         }
     }
     /*
-    Valid username and password with valid IPv4 header
-    Expired JWT
+    Expired access and refresh tokens
     */
 
     @Test
-    void ValidLoginAndActivateWithExpiredJwt () throws Exception {
-        JwtUtil jwtUtilTest = new JwtUtil("temporary-secret-key-for-dev-additional-length-to-get-to-256-bit", 1000L, 3000L);
-        String IPv4 = "10.12.1.145";
-        String loginBody = "{\"userName\":\"ValidUser12\",\"password\":\"V@lidPa$$w0rd\"}";
+    void ExpiredJwt () throws Exception {
+        JwtConfig.Access testAccess = new JwtConfig.Access();
+        testAccess.setExpiration(1000);
+
+        JwtConfig.Refresh testRefresh = new JwtConfig.Refresh();
+        testRefresh.setExpiration(2000);
+
+        JwtConfig.Header testHeader = new JwtConfig.Header();
+        testHeader.setAccessHeader("Authorization");
+        testHeader.setRefreshHeader("Refresh");
+        testHeader.setPrefix("Bearer ");
+
+        JwtConfig jwtConfig = new JwtConfig();
+        jwtConfig.setSecret("temporary-secret-key-for-dev-additional-length-to-get-to-256-bit");
+        jwtConfig.setAccess(testAccess);
+        jwtConfig.setRefresh(testRefresh);
+        jwtConfig.setHeader(testHeader);
+
+        JwtUtil jwtUtilTest = new JwtUtil(jwtConfig);
+
         String crmBody = "{\"givenName\":\"John\", \"surname\":\"Doe\", \"email\":\"johndoe@yahoo.com\", \"mobile\":\"12125551218\"}";
 
-        String jwt = jwtUtilTest.generateJwtToken("ValidUser12", "user");
-        System.out.println(jwt);
+        String access = jwtUtilTest.generateJwtToken("ValidUser12", "user");
+        String refresh = jwtUtilTest.generateRefreshToken("ValidUser12", "user");
         Thread.sleep(2000);
         mockMvc.perform(post("/auth/activate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(crmBody)
                 .with(request -> {
-                    request.addHeader("Authorization", "Bearer " + jwt);
+                    request.addHeader("Authorization", "Bearer " + access);
+                    request.addHeader("Refresh", "Bearer " + refresh);
                     return request;
                 }))
                 .andExpect(status().isUnauthorized());
+    }
+
+    /*
+    Expired access token. Successful refresh.
+     */
+    @Test
+    void SuccessfulJWTRefresh () throws Exception {
+        JwtConfig.Access testAccess = new JwtConfig.Access();
+        testAccess.setExpiration(1000);
+
+        JwtConfig.Refresh testRefresh = new JwtConfig.Refresh();
+        testRefresh.setExpiration(5000);
+
+        JwtConfig.Header testHeader = new JwtConfig.Header();
+        testHeader.setAccessHeader("Authorization");
+        testHeader.setRefreshHeader("Refresh");
+        testHeader.setPrefix("Bearer ");
+
+        JwtConfig jwtConfig = new JwtConfig();
+        jwtConfig.setSecret("temporary-secret-key-for-dev-additional-length-to-get-to-256-bit");
+        jwtConfig.setAccess(testAccess);
+        jwtConfig.setRefresh(testRefresh);
+        jwtConfig.setHeader(testHeader);
+
+        JwtUtil jwtUtilTest = new JwtUtil(jwtConfig);
+
+        String loginUser = "{\"userName\":\"ValidUser12\",\"password\":\"V@lidPa$$w0rd\"}";
+        String crmBody = "{\"givenName\":\"John\", \"surname\":\"Doe\", \"email\":\"johndoe@yahoo.com\", \"mobile\":\"12125551218\"}";
+
+        mockMvc.perform(post("/auth").contentType(MediaType.APPLICATION_JSON).content(loginUser)).andReturn();
+
+        String access = jwtUtilTest.generateJwtToken("ValidUser12", "user");
+        String refresh = jwtUtilTest.generateRefreshToken("ValidUser12", "user");
+        Thread.sleep(2000);
+        mockMvc.perform(post("/auth/activate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(crmBody)
+                        .with(request -> {
+                            request.addHeader("Authorization", "Bearer " + access);
+                            request.addHeader("Refresh", "Bearer " + refresh);
+                            return request;
+                        }))
+                .andDo(MockMvcResultHandlers.print())
+                .andExpect(status().is2xxSuccessful());
     }
 
     @Test
     void ValidLoginWithCorruptedToken () throws Exception {
         String crmBody = "{\"givenName\":\"John\", \"surname\":\"Doe\", \"email\":\"johndoe@yahoo.com\", \"mobile\":\"12125551218\"}";
 
-
         mockMvc.perform(post("/auth/activate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(crmBody)
                 .with(request -> {
-                    request.addHeader("Authorization", "Bearer Invalid JWT");
+                    request.addHeader("Authorization", "Bearer_Invalid_JWT");
+                    request.addHeader("Refresh", "Bearer_Invalid_refresh");
                     return request;
                 }))
                 .andExpect(status().isForbidden());
     }
+
+    /*
+    Consider unit test instead
+     */
+
+//    @Test
+//    void populatedContextCollision () throws Exception{
+//        Authentication fakeAuth = new UsernamePasswordAuthenticationToken("fakeUser", null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+//        SecurityContext fakeContext = SecurityContextHolder.createEmptyContext();
+//        fakeContext.setAuthentication(fakeAuth);
+//
+//        String body = "{\"userName\":\"ValidUser12\",\"password\":\"V@lidPa$$w0rd\"}";
+//        String crmBody = "{\"givenName\":\"John\", \"surname\":\"Doe\", \"email\":\"johndoe@yahoo.com\", \"mobile\":\"0523214564\"}";
+//
+//        MvcResult result = mockMvc.perform(post("/auth")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(body))
+//                .andExpect(status().isCreated())
+//                .andReturn();
+//
+//        String accessToken = JsonPath.read(result.getResponse().getContentAsString(), "$.accessToken");
+//        String refreshToken = JsonPath.read(result.getResponse().getContentAsString(), "$.refreshToken");
+//
+//        mockMvc.perform(post("/auth/activate")
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(crmBody)
+//                .with(request -> {
+//                    request.addHeader("Authorization", "Bearer " + accessToken);
+//                    request.addHeader("Refresh", "Bearer " + refreshToken);
+//                    SecurityContextHolder.setContext(fakeContext);
+//                    return request;
+//                }))
+//                .andDo(MockMvcResultHandlers.print())
+//                .andExpect(status().is2xxSuccessful());
+//    }
 }

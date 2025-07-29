@@ -50,7 +50,7 @@ public class UsersController {
         }
     }
 
-    @PreAuthorize("hasRole('user')")
+    @PreAuthorize("hasRole('user') or hasRole('admin'")
     @PostMapping("/activate")
     public ResponseEntity<?> newUserDetails (@RequestBody UserCrm userCrm){
         try {

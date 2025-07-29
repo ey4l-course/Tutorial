@@ -14,15 +14,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultHandler;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import java.util.List;
@@ -57,10 +51,10 @@ public class RegistrationIntegrationTest {
     @Test
     void HappyPath() throws Exception {
         String IPv6 = "2001:4810:ed07:1317:0001:0000:0000:00ff";
-        String body = "{\"userName\":\"ValidUser12\"," +
-                "\"password\":\"V@lidPa$$w0rd\"}";
+        String body = "{\"userName\":\"ValidUser12\",\"password\":\"V@lidPa$$w0rd\"}";
+        String bodyCrm = "{\"givenName\":\"John\", \"surname\":\"Doe\", \"email\":\"johndoe@yahoo.com\", \"mobile\":\"12125551218\"}";
 
-        mockMvc.perform(post("/auth")
+        MvcResult result = mockMvc.perform(post("/auth")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body)
                 .with(request -> {
@@ -70,13 +64,24 @@ public class RegistrationIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.message").value("user created"))
                 .andExpect(jsonPath("$.accessToken").isNotEmpty())
-                .andExpect(jsonPath("$.refreshToken").isNotEmpty());
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andReturn();
+        String access = JsonPath.read(result.getResponse().getContentAsString(), "$.accessToken");
+        String refresh = JsonPath.read(result.getResponse().getContentAsString(), "$.refreshToken");
+
+
+        mockMvc.perform(post("/auth/activate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(bodyCrm)
+                .header("Authorization", "Bearer " + access)
+                .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().is2xxSuccessful());
 
         UserLogin savedUser = repo.getUserByUserName("ValidUser12");
         assertNotNull(savedUser);
         assertEquals("ValidUser12", savedUser.getUserName());
         assertTrue(encoder.matches("V@lidPa$$w0rd", savedUser.getHashedPassword()));
-        assertFalse(savedUser.isActive());
+        assertTrue(savedUser.isActive());
 
         String sql = "SELECT * FROM common_ip";
         List<IpAddress> savedIp = jdbc.query(sql, new IpAddressMapper());

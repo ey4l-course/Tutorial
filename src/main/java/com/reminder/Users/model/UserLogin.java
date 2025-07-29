@@ -36,6 +36,15 @@ public class UserLogin {
     public UserLogin() {
     }
 
+    public UserLogin(Long id, Long userId, String userName, String hashedPassword, String role, boolean isActive) {
+        this.id = id;
+        this.userId = userId;
+        this.userName = userName;
+        this.hashedPassword = hashedPassword;
+        this.role = role;
+        this.isActive = isActive;
+    }
+
     public Long getId() {
         return id;
     }

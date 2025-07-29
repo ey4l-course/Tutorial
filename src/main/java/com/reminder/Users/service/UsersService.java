@@ -1,6 +1,7 @@
 package com.reminder.Users.service;
 
 import com.reminder.Users.model.IpAddress;
+import com.reminder.Users.model.TokensDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.repository.UsersRepository;
@@ -9,22 +10,29 @@ import com.reminder.Users.utilities.IpResolver;
 import com.reminder.Users.utilities.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
 @Service
 public class UsersService {
-    @Autowired
-    UsersRepository usersRepository;
-    @Autowired
-    JwtUtil jwtUtil;
-    @Autowired
-    BCryptPasswordEncoder encoder;
+    private final UsersRepository usersRepository;
+    private final JwtUtil jwtUtil;
+    private final BCryptPasswordEncoder encoder;
+
+    public UsersService (UsersRepository usersRepository,
+                         JwtUtil jwtUtil,
+                         BCryptPasswordEncoder encoder){
+        this.usersRepository = usersRepository;
+        this.jwtUtil = jwtUtil;
+        this.encoder = encoder;
+    }
 
     final private Pattern validEmail = Pattern.compile("^[a-zA-Z0-9-_~+.]{2,30}@[a-zA-Z0-9]{2,15}(\\.[a-zA-Z]{2,3}){1,2}$");
     final private Pattern validName = Pattern.compile("^(?=.{3,20}$)[a-zA-Z]{2,}(?: [a-zA-Z]{2,})*$");
@@ -58,6 +66,21 @@ public class UsersService {
         usersRepository.updateLoginUserId(userName, id);
     }
 
+    public TokensDTO loginService(UserLogin user) {
+        //TODO: text sanitation
+        UserLogin savedUser = usersRepository.getUserByUserName(user.getUserName());
+        if (!savedUser.isActive())
+            throw new InvalidParameterException("");
+        if (!encoder.matches(user.getHashedPassword(), savedUser.getHashedPassword()))
+            throw new AccessDeniedException("Invalid password");
+        return new TokensDTO(jwtUtil.generateJwtToken(savedUser.getUserName(), savedUser.getRole()),
+                    jwtUtil.generateRefreshToken(savedUser.getUserName(), savedUser.getRole()));
+    }
+
+    private String passwordHasher (String rawPassword){
+        return encoder.encode(rawPassword);
+    }
+
     private void validateCredentials(UserLogin user){
         if (!validUserName.matcher(user.getUserName()).matches())
             throw new  IllegalArgumentException ("User name must contain letters, digits single space or ._-$^~");
@@ -86,9 +109,6 @@ public class UsersService {
         else return 1;
     }
 
-    private String passwordHasher (String rawPassword){
-        return encoder.encode(rawPassword);
-    }
 
 //    private boolean isIpListed (String ipAddress, Long userId){
 //        return usersRepository.isIpListed(ipAddress, userId);

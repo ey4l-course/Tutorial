@@ -1,6 +1,7 @@
 package com.reminder.Users.controller;
 
 import com.reminder.Users.model.AuthResponseDTO;
+import com.reminder.Users.model.TokensDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.service.UsersService;
@@ -50,7 +51,7 @@ public class UsersController {
         }
     }
 
-    @PreAuthorize("hasRole('user') or hasRole('admin'")
+    @PreAuthorize("hasRole('user') or hasRole('admin')")
     @PostMapping("/activate")
     public ResponseEntity<?> newUserDetails (@RequestBody UserCrm userCrm){
         try {
@@ -58,6 +59,21 @@ public class UsersController {
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("message", "account activated"));
         }catch (IllegalArgumentException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }catch (Exception e){
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
+
+    @PreAuthorize("hasRole('user') or hasRole('admin')")
+    @PostMapping("/auth/login")
+    public ResponseEntity<?> login (@RequestBody UserLogin user) {
+        try {
+            TokensDTO tokens = usersService.loginService (user);
+            logUtil.infoLog(user.getUserName(), "Has successfully logged in");
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "Login successful",
+                    "accessToken", tokens.getAccessToken(),
+                    "refreshToken", tokens.getRefreshToken()));
         }catch (Exception e){
             String uuid = logUtil.error(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);

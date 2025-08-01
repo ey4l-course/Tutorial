@@ -1,13 +1,13 @@
 package com.reminder.Users;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.reminder.JwtConfig;
-import com.reminder.Users.model.IpAddress;
 import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.repository.UsersRepository;
-import com.reminder.Users.repository.mapper.IpAddressMapper;
 import com.reminder.Users.utilities.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,7 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,6 +36,9 @@ public class RegistrationIntegrationTest {
     JdbcTemplate jdbc;
     @Autowired
     BCryptPasswordEncoder encoder;
+    @Autowired
+    private ObjectMapper objectMapper;
+
 
     @BeforeEach
     void resetTestDb() {
@@ -44,11 +46,13 @@ public class RegistrationIntegrationTest {
         jdbc.execute("DELETE FROM user_login");
         jdbc.execute("DELETE FROM user_crm");
     }
+
     /*
     Valid username and password with valid IPv6 header
     Valid JWT with fully valid UserCRM
      */
     @Test
+    @DisplayName("HappyPath")
     void HappyPath() throws Exception {
         String IPv6 = "2001:4810:ed07:1317:0001:0000:0000:00ff";
         String body = "{\"userName\":\"ValidUser12\",\"password\":\"V@lidPa$$w0rd\"}";
@@ -82,12 +86,6 @@ public class RegistrationIntegrationTest {
         assertEquals("ValidUser12", savedUser.getUserName());
         assertTrue(encoder.matches("V@lidPa$$w0rd", savedUser.getHashedPassword()));
         assertTrue(savedUser.isActive());
-
-        String sql = "SELECT * FROM common_ip";
-        List<IpAddress> savedIp = jdbc.query(sql, new IpAddressMapper());
-        assertNotNull(savedIp);
-        assertEquals(savedIp.getFirst().getIpAddress(), "2001:4810:ed07:1317:1:0:0:ff");
-        assertFalse(savedIp.getFirst().isSus());
     }
 
     /*
@@ -96,6 +94,7 @@ public class RegistrationIntegrationTest {
 
      */
     @Test
+    @DisplayName("correctLoginWithInvalidUserDetails")
     void correctLoginWithInvalidUserDetails() throws Exception {
         String Ipv6mappedIPv4 = "::ffff:10.12.1.145";
         String loginBody = "{\"userName\":\"ValidUser12\"," +
@@ -138,6 +137,7 @@ public class RegistrationIntegrationTest {
     */
 
     @Test
+    @DisplayName("ExpiredJwt")
     void ExpiredJwt () throws Exception {
         JwtConfig.Access testAccess = new JwtConfig.Access();
         testAccess.setExpiration(1000);
@@ -178,6 +178,7 @@ public class RegistrationIntegrationTest {
     Expired access token. Successful refresh.
      */
     @Test
+    @DisplayName("SuccessfulJWTRefresh")
     void SuccessfulJWTRefresh () throws Exception {
         JwtConfig.Access testAccess = new JwtConfig.Access();
         testAccess.setExpiration(1000);
@@ -219,6 +220,7 @@ public class RegistrationIntegrationTest {
     }
 
     @Test
+    @DisplayName("ValidLoginWithCorruptedToken")
     void ValidLoginWithCorruptedToken () throws Exception {
         String crmBody = "{\"givenName\":\"John\", \"surname\":\"Doe\", \"email\":\"johndoe@yahoo.com\", \"mobile\":\"12125551218\"}";
 

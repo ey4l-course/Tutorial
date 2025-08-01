@@ -1,10 +1,15 @@
 package com.reminder.utilities;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.reminder.Users.model.RequestContextDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /*
@@ -15,6 +20,13 @@ Exceptions that imply misuse or user errors are logged as info and may be integr
 
 @Component
 public class LogUtil {
+    private final ObjectMapper objectMapper;
+    private static final Logger logger = LoggerFactory.getLogger(LogUtil.class);
+
+    public LogUtil (ObjectMapper objectMapper){
+        this.objectMapper = objectMapper;
+    }
+
     public String error (Exception e){
         String uuid = UUID.randomUUID().toString();
         StackTraceElement origin = Arrays.stream(e.getStackTrace())
@@ -44,5 +56,28 @@ public class LogUtil {
         Logger logger = LoggerFactory.getLogger("[SECURITY]");
         logger.info(msg);
         return uuid;
+    }
+
+    public String logRequest(RequestContextDTO contextDTO) {
+        String uuid = UUID.randomUUID().toString();
+        Map<String, Object> logPayload = new HashMap<>();
+        logPayload.put("method", contextDTO.getMethod());
+        logPayload.put("uri", contextDTO.getEntryRoute());
+        logPayload.put("IpAddress", contextDTO.getIp());
+        logPayload.put("userAgent", contextDTO.getUserAgent());
+        logPayload.put("Outcome", contextDTO.getOutcome());
+        logPayload.put("requestTime", contextDTO.getStartProcess());
+        logPayload.put("requestDuration", contextDTO.getEndProcess().toEpochMilli()-contextDTO.getStartProcess().toEpochMilli());
+        Logger logger = LoggerFactory.getLogger("[SECURITY]");
+        logger.info("RequestTrace: {}", toJson(logPayload));
+        return uuid;
+    }
+
+    private String toJson(Map<String, Object> payload) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            return "Error serializing request log: " + e.getMessage();
+        }
     }
 }

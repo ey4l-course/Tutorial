@@ -1,13 +1,25 @@
 package com.reminder.Users.utilities;
 
 
+import com.reminder.utilities.LogUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
+
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-public class IpResolver {
-    public static String normalizeIp (String ip){
-        try {
+public class IpUtil {
+    public static String ExtractIp (HttpServletRequest request) throws UnknownHostException {
+        String xFordwardedFor = request.getHeader("X-Forwarded-For");
+        String ipAddress = StringUtils.hasText(xFordwardedFor)
+                ? xFordwardedFor.split(",")[0].trim()
+                : request.getRemoteAddr();
+        return normalizeIp(ipAddress);
+    }
+
+    private static String normalizeIp (String ip) throws UnknownHostException{
             InetAddress inetAddress = InetAddress.getByName(ip);
             if (inetAddress instanceof Inet6Address){
                 byte[] addr = inetAddress.getAddress();
@@ -21,13 +33,6 @@ public class IpResolver {
                 }
             }
             return inetAddress.getHostAddress();
-        }catch (UnknownHostException e){
-            System.out.println("IP resolver failed" + e.getMessage());
-            return ip;
-        }catch (Exception e){
-            System.out.println("IP resolver failed" + e.getMessage());
-            return "No IP was recognized";
-        }
     }
 
     private static boolean isIpv4 (byte[] addr){

@@ -77,9 +77,9 @@ public class AuthService {
     }
 
     protected boolean validateUri (String currentPath){
-        currentPath = currentPath.split("\\?")[0];
+        currentPath = currentPath.split("\\?")[0]; //Remove search parameters
         if (!currentPath.equals("/") && currentPath.endsWith("/"))
-            currentPath = currentPath.substring(0, currentPath.length() - 1);
+            currentPath = currentPath.substring(0, currentPath.length() - 1); // removes trailing "/" if not root
         for (String pattern : jwtConfig.getExcludedPaths())
             if (matcher.match(pattern, currentPath))
                 return true;

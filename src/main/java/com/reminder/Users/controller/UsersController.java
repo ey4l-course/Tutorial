@@ -5,11 +5,13 @@ import com.reminder.Users.service.UsersService;
 import com.reminder.Users.utilities.JwtUtil;
 import com.reminder.utilities.LogUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -65,7 +67,7 @@ public class UsersController {
         }
     }
 
-    @PreAuthorize("hasRole('user') or hasRole('admin')")
+    @PreAuthorize("hasRole('user') or hasRole('admin') or hasRole(app)")
     @PostMapping("/auth/login")
     public ResponseEntity<?> login (@RequestBody UserLogin user) {
         try {
@@ -79,4 +81,46 @@ public class UsersController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
+
+    @PreAuthorize("hasRole('user') or hasRole('admin')")
+    @PatchMapping("/self_service")
+    public ResponseEntity<?> editMyself (@Valid @RequestBody UserUpdateDTO detailsDTO,
+                                         HttpServletRequest request){
+        RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
+        try {
+            detailsDTO.setServiceLevel(0);
+            String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+            contextDTO.setUserName(userName);
+            usersService.updateMyProfile(userName, detailsDTO);
+            logUtil.infoLog(userName, "has successfully updated profile");
+            contextDTO.setOutcome("[SUCCESS] status: 200, User profile updated");
+            return ResponseEntity.status(HttpStatus.OK).body("User updated");
+        }catch (IllegalArgumentException e){
+            contextDTO.setOutcome("[REJECTED] status 400, " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status 500, " + e.getMessage());
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
+
+    @PreAuthorize("hasRole('user') or hasRole('admin')")
+    @GetMapping("/self_service")
+    public ResponseEntity<?> LoadProfile (HttpServletRequest request){
+        RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
+        try {
+            String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+            contextDTO.setUserName(userName);
+            UserCrm myProfile = usersService.viewMyProfile(userName);
+            logUtil.infoLog(userName, "profile was successfully loaded by user");
+            contextDTO.setOutcome("[SUCCESS] status: 200, User profile viewed by user");
+            return ResponseEntity.status(HttpStatus.OK).body(myProfile);
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status 500, " + e.getMessage());
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
+
 }

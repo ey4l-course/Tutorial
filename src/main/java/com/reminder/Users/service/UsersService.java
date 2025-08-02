@@ -3,6 +3,7 @@ package com.reminder.Users.service;
 import com.reminder.Users.model.TokensDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
+import com.reminder.Users.model.UserUpdateDTO;
 import com.reminder.Users.repository.UsersRepository;
 import com.reminder.security.CustomUserDetails;
 import com.reminder.Users.utilities.JwtUtil;
@@ -69,6 +70,24 @@ public class UsersService {
                 jwtUtil.generateRefreshToken(savedUser.getUserName(), savedUser.getRole()));
     }
 
+    public void updateMyProfile(String userName, UserUpdateDTO detailsDTO) {
+        validateUpdateDetails(detailsDTO);
+        detailsDTO.setServiceLevel(determineServiceLevel(detailsDTO.getEmail(), detailsDTO.getMobile()));
+        usersRepository.updateMyProfile(userName, detailsDTO);
+    }
+
+    public UserCrm viewMyProfile(String userName) {
+        UserLogin userLogin = usersRepository.getUserByUserName(userName);
+        return usersRepository.getUserProfileById(userLogin.getUserId());
+    }
+
+
+    /*
+                *****************
+                *Utility methods*
+                *****************
+     */
+
     private String passwordHasher(String rawPassword) {
         return encoder.encode(rawPassword);
     }
@@ -88,6 +107,13 @@ public class UsersService {
         if (!validEmail.matcher(user.getEmail()).matches() && user.getEmail() != null && !user.getEmail().isEmpty())
             throw new IllegalArgumentException("Invalid E-mail address");
         if (!validMobile.matcher(user.getMobile()).matches() && user.getMobile() != null && !user.getMobile().isEmpty())
+            throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
+    }
+
+    private void validateUpdateDetails(UserUpdateDTO details){
+        if (!validEmail.matcher(details.getEmail()).matches() && details.getEmail() != null && !details.getEmail().isEmpty())
+            throw new IllegalArgumentException("Invalid E-mail address");
+        if (!validMobile.matcher(details.getMobile()).matches() && details.getMobile() != null && !details.getMobile().isEmpty())
             throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
     }
 

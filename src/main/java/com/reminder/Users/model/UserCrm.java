@@ -13,7 +13,7 @@ import java.time.Instant;
 public class UserCrm {
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
     @NotNull
     @Size(min = 3, max = 20)
     @Pattern(regexp = "^[a-zA-Z]+( [a-zA-Z]+)*$")
@@ -37,6 +37,16 @@ public class UserCrm {
     private Instant lastSeen;
 
     public UserCrm() {
+    }
+
+    public UserCrm(Long id, String givenName, String surname, String email, String mobile, int serviceLevel, Instant lastSeen) {
+        this.id = id;
+        this.givenName = givenName;
+        this.surname = surname;
+        this.email = email;
+        this.mobile = mobile;
+        this.serviceLevel = serviceLevel;
+        this.lastSeen = lastSeen;
     }
 
     public long getId() {

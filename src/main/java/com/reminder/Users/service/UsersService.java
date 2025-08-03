@@ -3,6 +3,7 @@ package com.reminder.Users.service;
 import com.reminder.Users.model.TokensDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
+import com.reminder.Users.model.UserUpdateDTO;
 import com.reminder.Users.repository.UsersRepository;
 import com.reminder.security.CustomUserDetails;
 import com.reminder.Users.utilities.JwtUtil;
@@ -69,6 +70,23 @@ public class UsersService {
                 jwtUtil.generateRefreshToken(savedUser.getUserName(), savedUser.getRole()));
     }
 
+    public void updateMyProfile(Long userId, UserUpdateDTO detailsDTO) {
+        validateUpdateDetails(detailsDTO);
+        detailsDTO = mergeProfiles(detailsDTO, userId);
+        detailsDTO.setServiceLevel(determineServiceLevel(detailsDTO.getEmail(), detailsDTO.getMobile()));
+        usersRepository.updateMyProfile(userId, detailsDTO);
+    }
+
+    public UserCrm viewMyProfile(Long userId) {
+        return usersRepository.getUserProfileById(userId);
+    }
+
+    /*
+                *****************
+                *Utility methods*
+                *****************
+     */
+
     private String passwordHasher(String rawPassword) {
         return encoder.encode(rawPassword);
     }
@@ -91,6 +109,15 @@ public class UsersService {
             throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
     }
 
+    private void validateUpdateDetails(UserUpdateDTO details){
+        if (details.getEmail() != null && !details.getEmail().isEmpty())
+            if (!validEmail.matcher(details.getEmail()).matches())
+                throw new IllegalArgumentException("Invalid E-mail address");
+        if (details.getMobile() != null && !details.getMobile().isEmpty())
+            if (!validMobile.matcher(details.getMobile()).matches())
+                throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
+    }
+
     private int determineServiceLevel(String email, String mobile) {
         boolean condition1 = (email != null && !email.isEmpty());
         boolean condition2 = (mobile != null && !mobile.isEmpty());
@@ -99,5 +126,14 @@ public class UsersService {
         if (condition1 || condition2)
             return 2;
         else return 1;
+    }
+
+    private UserUpdateDTO mergeProfiles (UserUpdateDTO newProfile, long id){
+        UserCrm existingProfile = usersRepository.getUserProfileById(id);
+        if (newProfile.getEmail() == null || newProfile.getEmail().isEmpty())
+            newProfile.setEmail(existingProfile.getEmail());
+        if (newProfile.getMobile() == null || newProfile.getMobile().isEmpty())
+            newProfile.setMobile(existingProfile.getMobile());
+        return newProfile;
     }
 }

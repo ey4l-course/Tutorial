@@ -2,11 +2,14 @@ package com.reminder.Users.repository;
 
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
+import com.reminder.Users.model.UserUpdateDTO;
+import com.reminder.Users.repository.mapper.UserCrmMapper;
 import com.reminder.Users.repository.mapper.UserLoginMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
@@ -75,5 +78,27 @@ public class UsersRepository {
     public void updateLoginUserId(String userName, Long id) {
         String sql = String.format("UPDATE %s SET user_id = ?, is_active = true WHERE user_name = ?", LOGIN);
         jdbcTemplate.update(sql, id, userName);
+    }
+
+    public void updateMyProfile(Long userId, UserUpdateDTO detailsDTO) {
+        String sql = String.format("UPDATE %s SET email_address = ?, mobile = ?, service_level = ?, last_seen = ? WHERE id = ?", CRM);
+        jdbcTemplate.update(con -> {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, detailsDTO.getEmail());
+            ps.setString(2, detailsDTO.getMobile());
+            ps.setInt(3, detailsDTO.getServiceLevel());
+            ps.setTimestamp(4, Timestamp.from(Instant.now()));
+            ps.setLong(5, userId);
+            return ps;
+        });
+    }
+
+    public UserCrm getUserProfileById(Long userId) {
+        String sql = String.format("SELECT * FROM %s WHERE id = ?", CRM);
+        String sqlUpdateLastSeen = String.format("UPDATE %s SET last_seen = ? WHERE id = ?", CRM);
+        Timestamp now = Timestamp.from(Instant.now());
+        UserCrm result = (UserCrm) jdbcTemplate.queryForObject(sql, new UserCrmMapper(), userId);
+        jdbcTemplate.update(sqlUpdateLastSeen, now, userId);
+        return result;
     }
 }

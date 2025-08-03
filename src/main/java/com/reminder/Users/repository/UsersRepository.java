@@ -101,4 +101,14 @@ public class UsersRepository {
         jdbcTemplate.update(sqlUpdateLastSeen, now, userId);
         return result;
     }
+
+    public void resetPassword(String hashedPassword, String userName) {
+        String sql = "UPDATE %s SET hashed_password = ? WHERE user_name = ?";
+        jdbcTemplate.update(con -> {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, hashedPassword);
+            ps.setString(2, userName);
+            return ps;
+        });
+    }
 }

@@ -38,7 +38,7 @@ public class UsersService {
     final private Pattern validPassword = Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[-!@#$%^&*()_./]).{8,}$");
 
     public TokensDTO newUser(UserLogin userCredentials) {
-        validateCredentials(userCredentials);
+        validateCredentials(userCredentials.getUserName(), userCredentials.getHashedPassword());
         userCredentials.setHashedPassword(passwordHasher(userCredentials.getHashedPassword()));
         userCredentials.setRole("user");
         usersRepository.save(userCredentials);
@@ -81,6 +81,11 @@ public class UsersService {
         return usersRepository.getUserProfileById(userId);
     }
 
+    public void resetPassword(String userName, String password) {
+        validateCredentials(userName, password);
+        usersRepository.resetPassword(encoder.encode(password), userName);
+    }
+
     /*
                 *****************
                 *Utility methods*
@@ -91,10 +96,10 @@ public class UsersService {
         return encoder.encode(rawPassword);
     }
 
-    private void validateCredentials(UserLogin user) {
-        if (!validUserName.matcher(user.getUserName()).matches())
+    private void validateCredentials(String userName, String password) {
+        if (!validUserName.matcher(userName).matches())
             throw new IllegalArgumentException("User name must contain letters, digits single space or ._-$^~");
-        if (!validPassword.matcher(user.getHashedPassword()).matches())
+        if (!validPassword.matcher(password).matches())
             throw new IllegalArgumentException("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)");
     }
 

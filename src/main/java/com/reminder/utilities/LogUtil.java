@@ -54,7 +54,7 @@ public class LogUtil {
     public String securityLog (String msg){
         String uuid = UUID.randomUUID().toString();
         Logger logger = LoggerFactory.getLogger("[SECURITY]");
-        logger.info(msg);
+        logger.info(String.format("%s,User:%s", uuid, msg));
         return uuid;
     }
 

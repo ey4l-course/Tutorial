@@ -1,9 +1,6 @@
 package com.reminder.Users.service;
 
-import com.reminder.Users.model.TokensDTO;
-import com.reminder.Users.model.UserCrm;
-import com.reminder.Users.model.UserLogin;
-import com.reminder.Users.model.UserUpdateDTO;
+import com.reminder.Users.model.*;
 import com.reminder.Users.repository.UsersRepository;
 import com.reminder.security.CustomUserDetails;
 import com.reminder.Users.utilities.JwtUtil;
@@ -38,7 +35,7 @@ public class UsersService {
     final private Pattern validPassword = Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[-!@#$%^&*()_./]).{8,}$");
 
     public TokensDTO newUser(UserLogin userCredentials) {
-        validateCredentials(userCredentials);
+        validateCredentials(userCredentials.getUserName(), userCredentials.getHashedPassword());
         userCredentials.setHashedPassword(passwordHasher(userCredentials.getHashedPassword()));
         userCredentials.setRole("user");
         usersRepository.save(userCredentials);
@@ -81,6 +78,12 @@ public class UsersService {
         return usersRepository.getUserProfileById(userId);
     }
 
+    public void resetPassword(PasswordResetDTO password){
+        validateCredentials(password.getUserName(), password.getPassword());
+        password.setHashedPassword(passwordHasher(password.getPassword()));
+        usersRepository.resetPassword(password);
+    }
+
     /*
                 *****************
                 *Utility methods*
@@ -91,10 +94,11 @@ public class UsersService {
         return encoder.encode(rawPassword);
     }
 
-    private void validateCredentials(UserLogin user) {
-        if (!validUserName.matcher(user.getUserName()).matches())
+    private void validateCredentials(String userName, String password) {
+        System.out.println("Check at validation:"+ userName +";"+ password);
+        if (userName == null || userName.isEmpty() || !validUserName.matcher(userName).matches())
             throw new IllegalArgumentException("User name must contain letters, digits single space or ._-$^~");
-        if (!validPassword.matcher(user.getHashedPassword()).matches())
+        if (password == null || password.isEmpty() || !validPassword.matcher(password).matches())
             throw new IllegalArgumentException("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)");
     }
 

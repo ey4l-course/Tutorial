@@ -129,4 +129,26 @@ public class UsersController {
         }
     }
 
+    @PreAuthorize("hasRole('user') or hasRole('admin')")
+    @PatchMapping("/self_service/reset_password")
+    public ResponseEntity<?> resetPassword (@RequestBody PasswordResetDTO password,
+                                            HttpServletRequest request){
+        RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
+        try {
+            String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+            contextDTO.setUserName(userName);
+            password.setUserName(userName);
+            usersService.resetPassword(password);
+            String uuid = logUtil.securityLog(userName + "Password successfully changed.");
+            contextDTO.setOutcome("[SUCCESS] status: 200, User password successfully changed, uuid: " + uuid);
+            return ResponseEntity.status(HttpStatus.OK).body("Password successfully changed. log ID: "+ uuid);
+        }catch (IllegalArgumentException e){
+            contextDTO.setOutcome("[REJECTED] status 400, " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status 500, " + e.getMessage());
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
 }

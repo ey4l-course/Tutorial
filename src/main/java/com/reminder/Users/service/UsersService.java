@@ -1,9 +1,6 @@
 package com.reminder.Users.service;
 
-import com.reminder.Users.model.TokensDTO;
-import com.reminder.Users.model.UserCrm;
-import com.reminder.Users.model.UserLogin;
-import com.reminder.Users.model.UserUpdateDTO;
+import com.reminder.Users.model.*;
 import com.reminder.Users.repository.UsersRepository;
 import com.reminder.security.CustomUserDetails;
 import com.reminder.Users.utilities.JwtUtil;
@@ -81,9 +78,10 @@ public class UsersService {
         return usersRepository.getUserProfileById(userId);
     }
 
-    public void resetPassword(String userName, String password) {
-        validateCredentials(userName, password);
-        usersRepository.resetPassword(encoder.encode(password), userName);
+    public void resetPassword(PasswordResetDTO password){
+        validateCredentials(password.getUserName(), password.getPassword());
+        password.setHashedPassword(passwordHasher(password.getPassword()));
+        usersRepository.resetPassword(password);
     }
 
     /*
@@ -97,9 +95,10 @@ public class UsersService {
     }
 
     private void validateCredentials(String userName, String password) {
-        if (!validUserName.matcher(userName).matches())
+        System.out.println("Check at validation:"+ userName +";"+ password);
+        if (userName == null || userName.isEmpty() || !validUserName.matcher(userName).matches())
             throw new IllegalArgumentException("User name must contain letters, digits single space or ._-$^~");
-        if (!validPassword.matcher(password).matches())
+        if (password == null || password.isEmpty() || !validPassword.matcher(password).matches())
             throw new IllegalArgumentException("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)");
     }
 

@@ -130,14 +130,15 @@ public class UsersController {
     }
 
     @PreAuthorize("hasRole('user') or hasRole('admin')")
-    @GetMapping("/self_service")
-    public ResponseEntity<?> resetPassword (String password,
+    @PatchMapping("/self_service/reset_password")
+    public ResponseEntity<?> resetPassword (@RequestBody PasswordResetDTO password,
                                             HttpServletRequest request){
         RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
         try {
             String userName = SecurityContextHolder.getContext().getAuthentication().getName();
             contextDTO.setUserName(userName);
-            usersService.resetPassword(userName, password);
+            password.setUserName(userName);
+            usersService.resetPassword(password);
             String uuid = logUtil.securityLog(userName + "Password successfully changed.");
             contextDTO.setOutcome("[SUCCESS] status: 200, User password successfully changed, uuid: " + uuid);
             return ResponseEntity.status(HttpStatus.OK).body("Password successfully changed. log ID: "+ uuid);

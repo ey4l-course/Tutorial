@@ -1,5 +1,6 @@
 package com.reminder.Users.repository;
 
+import com.reminder.Users.model.PasswordResetDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.model.UserUpdateDTO;
@@ -102,12 +103,12 @@ public class UsersRepository {
         return result;
     }
 
-    public void resetPassword(String hashedPassword, String userName) {
-        String sql = "UPDATE %s SET hashed_password = ? WHERE user_name = ?";
+    public void resetPassword(PasswordResetDTO password) {
+        String sql = String.format("UPDATE %s SET hashed_password = ? WHERE user_name = ?", LOGIN);
         jdbcTemplate.update(con -> {
             PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, hashedPassword);
-            ps.setString(2, userName);
+            ps.setString(1, password.getHashedPassword());
+            ps.setString(2, password.getUserName());
             return ps;
         });
     }

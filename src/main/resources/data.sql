@@ -36,3 +36,5 @@ CREATE TABLE common_ip (
     is_sus BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES user_login(id)
 );
+
+INSERT INTO user_login (user_name, hashed_password, role, is_active) VALUES ('_ping', '_ping', 'user', true);

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 public class UserUpdateDTO {
     @Size(max = 40)
-    @Email
+    @Email (message = "Invalid E-mail address")
     @Column(name = "email_address", unique = true)
     private String email;
     @Size(min = 10, max = 15)

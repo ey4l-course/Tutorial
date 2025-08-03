@@ -70,17 +70,16 @@ public class UsersService {
                 jwtUtil.generateRefreshToken(savedUser.getUserName(), savedUser.getRole()));
     }
 
-    public void updateMyProfile(String userName, UserUpdateDTO detailsDTO) {
+    public void updateMyProfile(Long userId, UserUpdateDTO detailsDTO) {
         validateUpdateDetails(detailsDTO);
+        detailsDTO = mergeProfiles(detailsDTO, userId);
         detailsDTO.setServiceLevel(determineServiceLevel(detailsDTO.getEmail(), detailsDTO.getMobile()));
-        usersRepository.updateMyProfile(userName, detailsDTO);
+        usersRepository.updateMyProfile(userId, detailsDTO);
     }
 
-    public UserCrm viewMyProfile(String userName) {
-        UserLogin userLogin = usersRepository.getUserByUserName(userName);
-        return usersRepository.getUserProfileById(userLogin.getUserId());
+    public UserCrm viewMyProfile(Long userId) {
+        return usersRepository.getUserProfileById(userId);
     }
-
 
     /*
                 *****************
@@ -111,10 +110,12 @@ public class UsersService {
     }
 
     private void validateUpdateDetails(UserUpdateDTO details){
-        if (!validEmail.matcher(details.getEmail()).matches() && details.getEmail() != null && !details.getEmail().isEmpty())
-            throw new IllegalArgumentException("Invalid E-mail address");
-        if (!validMobile.matcher(details.getMobile()).matches() && details.getMobile() != null && !details.getMobile().isEmpty())
-            throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
+        if (details.getEmail() != null && !details.getEmail().isEmpty())
+            if (!validEmail.matcher(details.getEmail()).matches())
+                throw new IllegalArgumentException("Invalid E-mail address");
+        if (details.getMobile() != null && !details.getMobile().isEmpty())
+            if (!validMobile.matcher(details.getMobile()).matches())
+                throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
     }
 
     private int determineServiceLevel(String email, String mobile) {
@@ -125,5 +126,14 @@ public class UsersService {
         if (condition1 || condition2)
             return 2;
         else return 1;
+    }
+
+    private UserUpdateDTO mergeProfiles (UserUpdateDTO newProfile, long id){
+        UserCrm existingProfile = usersRepository.getUserProfileById(id);
+        if (newProfile.getEmail() == null || newProfile.getEmail().isEmpty())
+            newProfile.setEmail(existingProfile.getEmail());
+        if (newProfile.getMobile() == null || newProfile.getMobile().isEmpty())
+            newProfile.setMobile(existingProfile.getMobile());
+        return newProfile;
     }
 }

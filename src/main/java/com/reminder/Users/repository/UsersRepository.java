@@ -80,23 +80,25 @@ public class UsersRepository {
         jdbcTemplate.update(sql, id, userName);
     }
 
-    public void updateMyProfile(String userName, UserUpdateDTO detailsDTO) {
-        String sql = String.format("UPDATE %s SET email_address = ?, mobile = ?, service_level = ?, last_seen = ? WHERE user_name = %s", CRM, userName);
+    public void updateMyProfile(Long userId, UserUpdateDTO detailsDTO) {
+        String sql = String.format("UPDATE %s SET email_address = ?, mobile = ?, service_level = ?, last_seen = ? WHERE id = ?", CRM);
         jdbcTemplate.update(con -> {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, detailsDTO.getEmail());
             ps.setString(2, detailsDTO.getMobile());
             ps.setInt(3, detailsDTO.getServiceLevel());
             ps.setTimestamp(4, Timestamp.from(Instant.now()));
+            ps.setLong(5, userId);
             return ps;
         });
     }
 
     public UserCrm getUserProfileById(Long userId) {
-        String sql = String.format("SELECT * FROM %s WHERE user_id = ?", CRM);
-        String sqlUpdateLastSeen = String.format("UPDATE %s SET last_seen = %s WHERE user_id = ?", CRM, Timestamp.from(Instant.now()));
+        String sql = String.format("SELECT * FROM %s WHERE id = ?", CRM);
+        String sqlUpdateLastSeen = String.format("UPDATE %s SET last_seen = ? WHERE id = ?", CRM);
+        Timestamp now = Timestamp.from(Instant.now());
         UserCrm result = (UserCrm) jdbcTemplate.queryForObject(sql, new UserCrmMapper(), userId);
-        jdbcTemplate.update(sqlUpdateLastSeen, userId);
+        jdbcTemplate.update(sqlUpdateLastSeen, now, userId);
         return result;
     }
 }

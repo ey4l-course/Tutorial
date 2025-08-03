@@ -11,12 +11,13 @@ public class UserCrmMapper implements RowMapper {
     @Override
     public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
         UserCrm user = new UserCrm();
+        user.setId(rs.getLong("id"));
         user.setGivenName(rs.getString("given_name"));
         user.setSurname(rs.getString("surname"));
-        user.setEmail(rs.getString("email"));
+        user.setEmail(rs.getString("email_address"));
         user.setMobile(rs.getString("mobile"));
         user.setServiceLevel(rs.getInt("service_level"));
         user.setLastSeen(rs.getTimestamp("last_seen").toInstant());
-        return null;
+        return user;
     }
 }

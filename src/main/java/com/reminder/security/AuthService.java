@@ -63,7 +63,6 @@ public class AuthService {
 
     public void setSecurityContext (AuthResponseDTO dto){
         Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println(currentAuth);
         CustomUserDetails userDetails = userDetailService.loadUserByUsername(dto.getUserName());
         Authentication newAuth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         if (currentAuth != null) {

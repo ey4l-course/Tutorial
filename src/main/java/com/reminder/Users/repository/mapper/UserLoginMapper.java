@@ -10,7 +10,7 @@ public class UserLoginMapper implements RowMapper {
     @Override
     public UserLogin mapRow(ResultSet rs, int rowNum) throws SQLException {
         UserLogin userLogin = new UserLogin();
-        userLogin.setUserId(rs.getLong("id"));
+        userLogin.setId(rs.getLong("id"));
         userLogin.setUserId(rs.getLong("user_id"));
         userLogin.setUserName(rs.getString("user_name"));
         userLogin.setHashedPassword(rs.getString("hashed_password"));

@@ -1,6 +1,7 @@
 package com.reminder.Users;
 
 import com.jayway.jsonpath.JsonPath;
+import com.reminder.Users.model.PasswordResetDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.repository.UsersRepository;
@@ -126,5 +127,39 @@ public class SelfServiceIntegrationTest {
                         .header("Refresh", "Bearer " + refresh))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$").value("Mobile must be 10-15 digit long, may include state prefix without + or separators"));
+    }
+
+    @Test
+    void resetPasswordHappyPath() throws Exception {
+        String access = jwtUtil.generateJwtToken("ValidUser1", "user");
+        String refresh = jwtUtil.generateRefreshToken("ValidUser1", "user");
+        String newPassword = "{\"password\": \"V@l1dP@ssw0rd\"}";
+        String oldHashed = jdbc.queryForObject("SELECT hashed_password FROM user_login WHERE user_name = 'ValidUser1'", String.class);
+        mockMvc.perform(patch("/auth/self_service/reset_password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(newPassword)
+                .header("Authorization", "Bearer " + access)
+                .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isOk());
+
+        String newHashed = jdbc.queryForObject("SELECT hashed_password FROM user_login WHERE user_name = 'ValidUser1'", String.class);
+        assertNotEquals(oldHashed, newHashed);
+    }
+
+    @Test
+    void resetPasswordInvalidPassword() throws Exception {
+        String access = jwtUtil.generateJwtToken("ValidUser1", "user");
+        String refresh = jwtUtil.generateRefreshToken("ValidUser1", "user");
+        String[] newPassword = {"", null, "invalid", "Ty@2", "VeryComplicated12"};
+        for (String password : newPassword) {
+            String passwordJson = String.format("{\"password\":\"%s\"}",password);
+            mockMvc.perform(patch("/auth/self_service/reset_password")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(passwordJson)
+                            .header("Authorization", "Bearer " + access)
+                            .header("Refresh", "Bearer " + refresh))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$").value("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)"));
+        }
     }
 }

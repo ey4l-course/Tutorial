@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.InvalidParameterException;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @Service
@@ -145,5 +146,9 @@ public class UsersService {
         if (newProfile.getMobile() == null || newProfile.getMobile().isEmpty())
             newProfile.setMobile(existingProfile.getMobile());
         return newProfile;
+    }
+
+    public List<UserCrm> getAllProfiles() {
+        return usersRepository.getAllProfiles();
     }
 }

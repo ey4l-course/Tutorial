@@ -121,4 +121,9 @@ public class UsersRepository {
             return ps;
         });
     }
+
+    public List<UserCrm> getAllProfiles() {
+        String sql = "SELECT * FROM " + CRM;
+        return jdbcTemplate.query(sql, new UserCrmMapper());
+    }
 }

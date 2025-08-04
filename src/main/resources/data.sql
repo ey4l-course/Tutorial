@@ -24,7 +24,7 @@ CREATE TABLE user_login (
     hashed_password VARCHAR(100) NOT NULL,
     role VARCHAR(10) NOT NULL,
     is_active BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (user_id) REFERENCES user_crm(id)
+    FOREIGN KEY (user_id) REFERENCES user_crm(id) ON DELETE CASCADE
 );
 
 CREATE TABLE common_ip (

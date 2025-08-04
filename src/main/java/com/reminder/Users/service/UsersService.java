@@ -84,6 +84,12 @@ public class UsersService {
         usersRepository.resetPassword(password);
     }
 
+    public void deleteAccount(DeleteAccountDTO dto) {
+        String storedHash = usersRepository.getUserByUserName(dto.getUserName()).getHashedPassword();
+        if (!encoder.matches(dto.getPasswrod(),storedHash))
+            throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPasswrod());
+        usersRepository.deleteAccount(dto.getUserName());
+    }
     /*
                 *****************
                 *Utility methods*

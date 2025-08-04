@@ -112,4 +112,13 @@ public class UsersRepository {
             return ps;
         });
     }
+
+    public void deleteAccount(String userName) {
+        String sql = String.format("DELETE FROM %s WHERE user_name = ?", LOGIN);
+        jdbcTemplate.update(con -> {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, userName);
+            return ps;
+        });
+    }
 }

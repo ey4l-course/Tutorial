@@ -151,4 +151,27 @@ public class UsersController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
+
+    @PreAuthorize("hasRole('user') or hasRole('admin')")
+    @DeleteMapping("/auth/self_service")
+    public ResponseEntity<?> deleteAccount (@RequestBody DeleteAccountDTO dto,
+                                            HttpServletRequest request){
+        RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
+        try {
+            dto.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
+            contextDTO.setUserName(dto.getUserName());
+            usersService.deleteAccount(dto);
+            String uuid = logUtil.securityLog(dto.getUserName() + "successfully deleted the account.");
+            contextDTO.setOutcome("[SUCCESS] status: 200, User account successfully deleted, uuid: " + uuid);
+            return ResponseEntity.status(HttpStatus.OK).body("Account successfully deleted. log ID: "+ uuid);
+        }catch (AccessDeniedException e){
+            String uuid = logUtil.securityLog(e.getMessage());
+            contextDTO.setOutcome("[REJECTED] status 403, " + e.getMessage() + ", uuid: " + uuid);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. If you believe you've been mistakenly blocked, please raise a ticket to support. log id: " + uuid);
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status 500, " + e.getMessage());
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
 }

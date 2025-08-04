@@ -1,8 +1,9 @@
 package com.reminder.Users.model;
 
 public class DeleteAccountDTO {
+    private Long id;
     private String userName;
-    private String passwrod;
+    private String password;
 
     public DeleteAccountDTO() {
     }
@@ -15,11 +16,19 @@ public class DeleteAccountDTO {
         this.userName = userName;
     }
 
-    public String getPasswrod() {
-        return passwrod;
+    public String getPassword() {
+        return password;
     }
 
-    public void setPasswrod(String passwrod) {
-        this.passwrod = passwrod;
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }

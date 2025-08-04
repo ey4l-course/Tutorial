@@ -153,12 +153,14 @@ public class UsersController {
     }
 
     @PreAuthorize("hasRole('user') or hasRole('admin')")
-    @DeleteMapping("/auth/self_service")
+    @DeleteMapping("/self_service")
     public ResponseEntity<?> deleteAccount (@RequestBody DeleteAccountDTO dto,
                                             HttpServletRequest request){
         RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
         try {
             dto.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
+            CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            dto.setId(userDetails.getUserId());
             contextDTO.setUserName(dto.getUserName());
             usersService.deleteAccount(dto);
             String uuid = logUtil.securityLog(dto.getUserName() + "successfully deleted the account.");

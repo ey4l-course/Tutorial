@@ -1,7 +1,5 @@
 package com.reminder.Users;
 
-import com.jayway.jsonpath.JsonPath;
-import com.reminder.Users.model.PasswordResetDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.model.UserLogin;
 import com.reminder.Users.repository.UsersRepository;
@@ -13,15 +11,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -161,5 +158,39 @@ public class SelfServiceIntegrationTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$").value("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)"));
         }
+    }
+
+    @Test
+    void deleteHappyPath() throws Exception{
+        String access = jwtUtil.generateJwtToken("ValidUser1", "user");
+        String refresh = jwtUtil.generateRefreshToken("ValidUser1", "user");
+        String correctPassword = "{\"password\": \"V@lidP@$$w0rd\"}";
+
+        mockMvc.perform(delete("/auth/self_service")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(correctPassword)
+                .header("Authorization", "Bearer " + access)
+                .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isOk());
+
+        assertThrows(EmptyResultDataAccessException.class ,() -> jdbc.queryForObject("SELECT id FROM user_crm WHERE given_name = 'John'", String.class));
+        assertThrows(EmptyResultDataAccessException.class ,() -> jdbc.queryForObject("SELECT id FROM user_login WHERE user_name = 'ValidUser1'", String.class));
+    }
+
+    @Test
+    void deleteWrongPassword() throws Exception {
+        String access = jwtUtil.generateJwtToken("ValidUser1", "user");
+        String refresh = jwtUtil.generateRefreshToken("ValidUser1", "user");
+        String correctPassword = "{\"password\": \"V@lidP@$$w0rd1\"}";
+
+        mockMvc.perform(delete("/auth/self_service")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(correctPassword)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isForbidden());
+
+        assertNotNull(jdbc.queryForObject("SELECT id FROM user_crm WHERE given_name = 'John'", String.class));
+        assertNotNull(jdbc.queryForObject("SELECT id FROM user_login WHERE user_name = 'ValidUser1'", String.class));
     }
 }

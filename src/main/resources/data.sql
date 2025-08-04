@@ -50,7 +50,7 @@ INSERT INTO user_crm (given_name, surname, email_address, mobile, service_level,
 ('Jonas', 'Peretz', 'jonas.peretz@example.com', '0500123456', 2, '2025-08-04 07:10:00');
 
 INSERT INTO user_login (user_id, user_name, hashed_password, role, is_active) VALUES
-(1, 'aliceg', 'HASHED_1', 'adwmin', TRUE),
+(1, 'aliceg', 'HASHED_1', 'admin', TRUE),
 (2, 'benc', 'HASHED_2', 'user', TRUE),
 (3, 'claral', 'HASHED_3', 'user', FALSE),
 (4, 'davidm', 'HASHED_4', 'manager', TRUE),

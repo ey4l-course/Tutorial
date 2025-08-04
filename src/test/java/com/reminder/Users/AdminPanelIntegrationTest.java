@@ -31,7 +31,8 @@ public class AdminPanelIntegrationTest {
     JwtUtil jwtUtil;
 
     @Test
-    void getAllProfilesCorrect () throws Exception{
+    void getAllProfiles () throws Exception{
+        //correct admin access
         String access = jwtUtil.generateJwtToken("aliceg", "admin");
         String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
 
@@ -40,5 +41,14 @@ public class AdminPanelIntegrationTest {
                 .header("Authorization", "Bearer " + access)
                 .header("Refresh", "Bearer " + refresh))
                 .andExpect(status().isOk());
+
+        //Access without admin role
+        access = jwtUtil.generateJwtToken("benc", "user");
+        refresh = jwtUtil.generateRefreshToken("benc", "user");
+        mockMvc.perform(get("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isForbidden());
     }
 }

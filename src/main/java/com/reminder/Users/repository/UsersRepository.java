@@ -112,4 +112,13 @@ public class UsersRepository {
             return ps;
         });
     }
+
+    public void deleteAccount(Long id) {
+        String sql = String.format("DELETE FROM %s WHERE id = ?", CRM);
+        jdbcTemplate.update(con -> {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setLong(1, id);
+            return ps;
+        });
+    }
 }

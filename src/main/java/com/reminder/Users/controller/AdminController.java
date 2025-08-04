@@ -33,7 +33,7 @@ public class AdminController {
             contextDTO.setOutcome("[SUCCESS] status: 200, " + result.size() + " entries retrieved");
             return ResponseEntity.status(HttpStatus.OK).body(result);
         }catch (Exception e){
-            contextDTO.setOutcome("[REJECTED] status 500, " + e.getMessage());
+            contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
             String uuid = logUtil.error(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }

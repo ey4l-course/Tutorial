@@ -11,6 +11,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -146,5 +147,50 @@ public class UsersRepository {
         }
         String sql = sqlBuilder.toString();
         return jdbcTemplate.query(sql,params.toArray(), new UserCrmMapper());
+    }
+
+    public void updateProfile(AdminEditProfileDTO userProfile, Long userid) {
+        StringBuilder sqlBuilder = new StringBuilder("UPDATE " + CRM + " SET");
+        List<Object> params = new ArrayList<>();
+        boolean first = true;
+        if (userProfile.getGivenName() != null && !userProfile.getGivenName().isEmpty()){
+            sqlBuilder.append(" given_name = ?");
+            params.add(userProfile.getGivenName());
+            first = false;
+        }
+        if (userProfile.getSurname() != null && !userProfile.getSurname().isEmpty()){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" surname = ?");
+            params.add(userProfile.getSurname());
+            first = false;
+        }
+        if (userProfile.getEmail() != null && !userProfile.getEmail().isEmpty()){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" email = ?");
+            params.add(userProfile.getEmail());
+            first = false;
+        }
+        if (userProfile.getMobile() != null && !userProfile.getMobile().isEmpty()){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" mobile = ?");
+            params.add(userProfile.getMobile());
+            first = false;
+        }
+        if (userProfile.getServiceLevel() != 0){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" service_level = ?");
+            params.add(userProfile.getServiceLevel());
+            first = false;
+        }
+        if (first)
+            throw new IllegalArgumentException("No arguments to update");
+        sqlBuilder.append(" WHERE id = ?");
+        params.add(userid);
+        String sql = sqlBuilder.toString();
+        jdbcTemplate.update(sql, params.toArray());
     }
 }

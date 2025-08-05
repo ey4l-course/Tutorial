@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
 import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -148,6 +149,15 @@ public class UsersService {
         return newProfile;
     }
 
+    private AdminEditProfileDTO mergeProfilesAdmin (AdminEditProfileDTO newProfile, Long userId){
+        UserCrm existingProfile = usersRepository.getUserProfileById(userId);
+        for (Field field : newProfile.getClass().getDeclaredFields()){
+            field.setAccessible(true);
+            //TODO: iterate and assign existing values for null fields
+        }
+        return newProfile;
+    }
+
     public List<UserCrm> getAllProfiles() {
         return usersRepository.getAllProfiles();
     }
@@ -158,5 +168,9 @@ public class UsersService {
 
     public List<UserCrm> searchProfile(SearchProfileDTO search) {
         return usersRepository.searchProfile(search);
+    }
+
+    public void updateUserProfile(AdminEditProfileDTO userProfile, Long userId) {
+        usersRepository.updateProfile(userProfile, userId);
     }
 }

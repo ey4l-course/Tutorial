@@ -1,9 +1,11 @@
 package com.reminder.Users.controller;
 
+import com.reminder.Users.model.AdminEditProfileDTO;
 import com.reminder.Users.model.RequestContextDTO;
 import com.reminder.Users.model.SearchProfileDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.service.UsersService;
+import com.reminder.security.CustomUserDetails;
 import com.reminder.utilities.LogUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -73,6 +75,26 @@ public class AdminController {
             List<UserCrm> result = usersService.searchProfile(search);
             contextDTO.setOutcome("[SUCCESS] status: 200, " + result.size() + " entries retrieved");
             return ResponseEntity.status(HttpStatus.OK).body(result);
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
+
+    @PatchMapping
+    public ResponseEntity<?> editUserProfile (@RequestBody AdminEditProfileDTO userProfile,
+                                              HttpServletRequest request){
+        RequestContextDTO contextDTO = contextHandler(request);
+        try {
+            CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication();
+            Long userId = userDetails.getUserId();
+            usersService.updateUserProfile(userProfile, userId);
+            contextDTO.setOutcome("[SUCCESS] status: 202, User " + userId + "successfully updated");
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body("User " + userId + "Successfully updated.");
+        }catch (IllegalArgumentException e){
+            contextDTO.setOutcome("[Failed] status: 422, " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(e.getMessage());
         }catch (Exception e){
             contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
             String uuid = logUtil.error(e);

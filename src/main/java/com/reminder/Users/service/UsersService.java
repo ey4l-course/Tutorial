@@ -151,4 +151,12 @@ public class UsersService {
     public List<UserCrm> getAllProfiles() {
         return usersRepository.getAllProfiles();
     }
+
+    public UserCrm getProfileById(Long id) {
+        return usersRepository.adminGetProfileById(id);
+    }
+
+    public List<UserCrm> searchProfile(SearchProfileDTO search) {
+        return usersRepository.searchProfile(search);
+    }
 }

@@ -1,9 +1,6 @@
 package com.reminder.Users.repository;
 
-import com.reminder.Users.model.PasswordResetDTO;
-import com.reminder.Users.model.UserCrm;
-import com.reminder.Users.model.UserLogin;
-import com.reminder.Users.model.UserUpdateDTO;
+import com.reminder.Users.model.*;
 import com.reminder.Users.repository.mapper.UserCrmMapper;
 import com.reminder.Users.repository.mapper.UserLoginMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -102,6 +100,11 @@ public class UsersRepository {
         return result;
     }
 
+    public UserCrm adminGetProfileById (Long id){
+        String sql = String.format("SELECT * FROM %s WHERE id = ?", CRM);
+        return  (UserCrm) jdbcTemplate.queryForObject(sql, new UserCrmMapper(), id);
+    }
+
     public void resetPassword(PasswordResetDTO password) {
         String sql = String.format("UPDATE %s SET hashed_password = ? WHERE user_name = ?", LOGIN);
         jdbcTemplate.update(con -> {
@@ -124,5 +127,24 @@ public class UsersRepository {
     public List<UserCrm> getAllProfiles() {
         String sql = "SELECT * FROM " + CRM;
         return jdbcTemplate.query(sql, new UserCrmMapper());
+    }
+
+    public List<UserCrm> searchProfile(SearchProfileDTO search) {
+        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM " + CRM + " WHERE 1=1");
+        List<Object> params = new ArrayList<>();
+        if (search.getGivenName() != null && !search.getGivenName().isEmpty()) {
+            sqlBuilder.append(" AND given_name = ? ");
+            params.add(search.getSurname());
+        }
+        if (search.getSurname() != null && !search.getSurname().isEmpty()) {
+            sqlBuilder.append(" AND surname = ? ");
+            params.add(search.getSurname());
+        }
+        if (search.getServiceLevel() != 0) {
+            sqlBuilder.append("service_level = ?");
+            params.add(search.getServiceLevel());
+        }
+        String sql = sqlBuilder.toString();
+        return jdbcTemplate.query(sql,params.toArray(), new UserCrmMapper());
     }
 }

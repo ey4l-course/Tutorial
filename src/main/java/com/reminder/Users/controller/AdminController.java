@@ -1,6 +1,7 @@
 package com.reminder.Users.controller;
 
 import com.reminder.Users.model.RequestContextDTO;
+import com.reminder.Users.model.SearchProfileDTO;
 import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.service.UsersService;
 import com.reminder.utilities.LogUtil;
@@ -8,9 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -30,6 +29,39 @@ public class AdminController {
         RequestContextDTO contextDTO = contextHandler(request);
         try {
             List<UserCrm> result = usersService.getAllProfiles();
+            contextDTO.setOutcome("[SUCCESS] status: 200, " + result.size() + " entries retrieved");
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
+
+    @GetMapping("/user/{id}")
+    public ResponseEntity<?> getProfileById (@PathVariable Long id,
+                                             HttpServletRequest request){
+        RequestContextDTO contextDTO = contextHandler(request);
+        try {
+            UserCrm result = usersService.getProfileById(id);
+            contextDTO.setOutcome("[SUCCESS] status: 200, Profile retrieved for: " + result.getGivenName() + " " + result.getSurname());
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<?> GetProfilesByQuery (@RequestParam(value = "given-name", required = false) String givenName,
+                                                 @RequestParam(value = "surname", required = false) String surname,
+                                                 @RequestParam(value = "service-level", required = false) int level,
+                                                 HttpServletRequest request){
+        RequestContextDTO contextDTO = contextHandler(request);
+        try {
+            SearchProfileDTO search = new SearchProfileDTO(givenName, surname, level);
+            List<UserCrm> result = usersService.searchProfile(search);
             contextDTO.setOutcome("[SUCCESS] status: 200, " + result.size() + " entries retrieved");
             return ResponseEntity.status(HttpStatus.OK).body(result);
         }catch (Exception e){

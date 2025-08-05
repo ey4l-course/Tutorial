@@ -134,14 +134,14 @@ public class UsersRepository {
         List<Object> params = new ArrayList<>();
         if (search.getGivenName() != null && !search.getGivenName().isEmpty()) {
             sqlBuilder.append(" AND given_name = ? ");
-            params.add(search.getSurname());
+            params.add(search.getGivenName());
         }
         if (search.getSurname() != null && !search.getSurname().isEmpty()) {
             sqlBuilder.append(" AND surname = ? ");
             params.add(search.getSurname());
         }
         if (search.getServiceLevel() != 0) {
-            sqlBuilder.append("service_level = ?");
+            sqlBuilder.append(" AND service_level = ?");
             params.add(search.getServiceLevel());
         }
         String sql = sqlBuilder.toString();

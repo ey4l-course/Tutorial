@@ -6,6 +6,7 @@ import com.reminder.Users.model.UserCrm;
 import com.reminder.Users.service.UsersService;
 import com.reminder.utilities.LogUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,6 +47,9 @@ public class AdminController {
             UserCrm result = usersService.getProfileById(id);
             contextDTO.setOutcome("[SUCCESS] status: 200, Profile retrieved for: " + result.getGivenName() + " " + result.getSurname());
             return ResponseEntity.status(HttpStatus.OK).body(result);
+        }catch (EmptyResultDataAccessException e){
+            contextDTO.setOutcome("[Failed] status: 404. User with ID " + " not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with ID " + " not found");
         }catch (Exception e){
             contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
             String uuid = logUtil.error(e);
@@ -56,10 +60,15 @@ public class AdminController {
     @GetMapping("/user")
     public ResponseEntity<?> GetProfilesByQuery (@RequestParam(value = "given-name", required = false) String givenName,
                                                  @RequestParam(value = "surname", required = false) String surname,
-                                                 @RequestParam(value = "service-level", required = false) int level,
+                                                 @RequestParam(value = "service-level", required = false) Integer serviceLevel,
                                                  HttpServletRequest request){
         RequestContextDTO contextDTO = contextHandler(request);
+        if (givenName == null && surname == null && serviceLevel == null){
+            contextDTO.setOutcome("[REJECTED] status: 400, Invalid search parameters");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid search parameters");
+        }
         try {
+            int level = serviceLevel == null ? 0 : serviceLevel;
             SearchProfileDTO search = new SearchProfileDTO(givenName, surname, level);
             List<UserCrm> result = usersService.searchProfile(search);
             contextDTO.setOutcome("[SUCCESS] status: 200, " + result.size() + " entries retrieved");

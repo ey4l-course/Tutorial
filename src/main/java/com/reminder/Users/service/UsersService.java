@@ -234,4 +234,8 @@ public class UsersService {
             throw new IllegalArgumentException(String.format("User %s already %s.", id, wanted));
         return String.format("User %s successfully %s", id, wanted);
     }
+
+    public Long newSpecialUser(UserLogin user) {
+        return usersRepository.saveSpecial(user);
+    }
 }

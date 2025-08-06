@@ -1,9 +1,6 @@
 package com.reminder.Users.controller;
 
-import com.reminder.Users.model.AdminEditProfileDTO;
-import com.reminder.Users.model.RequestContextDTO;
-import com.reminder.Users.model.SearchProfileDTO;
-import com.reminder.Users.model.UserCrm;
+import com.reminder.Users.model.*;
 import com.reminder.Users.service.UsersService;
 import com.reminder.security.CustomUserDetails;
 import com.reminder.utilities.LogUtil;
@@ -122,6 +119,30 @@ public class AdminController {
         }
     }
 
+    @PutMapping
+    public ResponseEntity<?> createSpecialUser (@RequestBody UserLogin user,
+                                                HttpServletRequest request){
+        //Create admin or app user
+    RequestContextDTO contextDTO = contextHandler(request);
+        try {
+            if (user.getRole() == "user") {
+                String uuid = logUtil.securityLog(contextDTO.getUserName() + " Attempted to create regular user " + user.toString());
+                contextDTO.setOutcome("[REJECTED] status: 403, Violation detected. security log: " + uuid);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Incident reported ref: " + uuid);
+            }
+            user.setId(usersService.newSpecialUser(user));
+            contextDTO.setOutcome("[SUCCESS] status 201, User created: " + user.toString());
+            return ResponseEntity.status(HttpStatus.CREATED).body("User created and assigned with ID: " + user.getId());
+        }catch (IllegalArgumentException e){
+            contextDTO.setOutcome("[REJECTED] status 400, " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
+            System.out.println(e);
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
 
     private RequestContextDTO contextHandler (HttpServletRequest request){
         RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");

@@ -156,4 +156,22 @@ public class UsersRepository {
         String sql = String.format("SELECT is_active from %s WHERE user_id = ?", LOGIN);
         return jdbcTemplate.queryForObject(sql, boolean.class, id);
     }
+
+    public Long saveSpecial(UserLogin user) {
+        try {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            String sql = String.format("INSERT INTO %s (user_name, hashed_password, role, is_active) VALUES (?, ?, ?, ?)", LOGIN);
+            jdbcTemplate.update(con -> {
+                PreparedStatement ps = con.prepareStatement(sql, new String[]{"id"});
+                ps.setString(1, user.getUserName());
+                ps.setString(2, user.getHashedPassword());
+                ps.setString(3, user.getRole());
+                ps.setBoolean(4, user.isActive());
+                return ps;
+            }, keyHolder);
+            return keyHolder.getKeyAs(Long.class);
+        }catch (DataIntegrityViolationException e){
+            throw new IllegalArgumentException("User-name already taken");
+        }
+    }
 }

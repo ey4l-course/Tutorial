@@ -217,4 +217,38 @@ public class AdminPanelIntegrationTest {
                         .header("Refresh", "Bearer " + refresh))
                 .andExpect(status().isUnprocessableEntity());
     }
+
+    @Test
+    void activationCorrect () throws Exception{
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+
+        mockMvc.perform(patch("/admin/activation/2/false")
+                .header("Authorization", "Bearer " + access)
+                .header("Refresh", "Bearer " + refresh))
+            .andExpect(status().isAccepted());
+
+
+        mockMvc.perform(patch("/admin/activation/3/true")
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isAccepted());
+    }
+
+    @Test
+    void activationConflict () throws Exception{
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+
+        mockMvc.perform(patch("/admin/activation/3/false")
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isConflict());
+
+
+        mockMvc.perform(patch("/admin/activation/2/true")
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isConflict());
+    }
 }

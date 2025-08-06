@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -143,6 +144,29 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteAccountByAdmin (DeleteAccountDTO dto,
+                                                   HttpServletRequest request){
+        RequestContextDTO contextDTO = contextHandler(request);
+        try {
+            dto.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
+            usersService.deleteAccount(dto);
+            String uuid = logUtil.securityLog(dto.getUserName() + "successfully deleted the account.");
+            contextDTO.setOutcome("[SUCCESS] status: 200, User account successfully deleted, uuid: " + uuid);
+            return ResponseEntity.status(HttpStatus.OK).body("User successfully deleted, uuid: " + uuid);
+        }catch (AccessDeniedException e){
+            String uuid = logUtil.securityLog(e.getMessage());
+            contextDTO.setOutcome("[REJECTED] status 403, " + e.getMessage() + ", uuid: " + uuid);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied. If you believe you've been mistakenly blocked, please raise a ticket to support. log id: " + uuid);
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
+            System.out.println(e);
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
+
 
     private RequestContextDTO contextHandler (HttpServletRequest request){
         RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");

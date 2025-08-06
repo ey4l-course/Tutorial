@@ -11,6 +11,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -117,5 +120,101 @@ public class AdminPanelIntegrationTest {
                         .header("Refresh", "Bearer " + refresh))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$").value("Invalid search parameters"));
+    }
+
+    @Test
+    void updateProfileByAdmin () throws Exception {
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+        String givenName = "\"givenName\":\"Benjamin\"";
+        String surname = "\"surname\":\"Katz\"";
+        String email = "\"email\":\"new@mail.com\"";
+        String mobile = "\"mobile\":\"0527654321\"";
+        String serviceLevel = "\"serviceLevel\":\"2\"";
+//Test with full profile
+        mockMvc.perform(patch("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh)
+                        .content("{" + givenName + ", " +
+                                surname + ", " +
+                                email + ", " +
+                                mobile + ", " +
+                                serviceLevel + "}"))
+                .andExpect(status().isAccepted());
+//Test without givenName
+        mockMvc.perform(patch("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh)
+                        .content("{" + surname + ", " +
+                                email + ", " +
+                                mobile + ", " +
+                                serviceLevel + "}"))
+                .andExpect(status().isAccepted());
+//Test without surname
+        mockMvc.perform(patch("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh)
+                        .content("{" + givenName + ", " +
+                                email + ", " +
+                                mobile + ", " +
+                                serviceLevel + "}"))
+                .andExpect(status().isAccepted());
+//Test without email
+        mockMvc.perform(patch("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh)
+                        .content("{" + givenName + ", " +
+                                surname + ", " +
+                                mobile + ", " +
+                                serviceLevel + "}"))
+                .andExpect(status().isAccepted());
+//Test without mobile
+        mockMvc.perform(patch("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh)
+                        .content("{" + givenName + ", " +
+                                surname + ", " +
+                                email + ", " +
+                                serviceLevel + "}"))
+                .andExpect(status().isAccepted());
+    }
+
+
+    @Test
+        void updateProfileByAdminWithInvalidDetails () throws Exception {
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+        List<String> testString = new ArrayList<>();
+        testString.add ("\"givenName\":\"Be1njamin\"");
+        testString.add ("\"surname\":\"Kat3z\"");
+        testString.add ("\"email\":\"new@mail.comma\"");
+        testString.add ("\"mobile\":\"052-7654321\"");
+        testString.add ("");
+
+        for (String field : testString) {
+            mockMvc.perform(patch("/admin")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + access)
+                            .header("Refresh", "Bearer " + refresh)
+                            .content("{" + field + "}"))
+                    .andExpect(status().isUnprocessableEntity());
+        }
+    }
+
+    @Test
+    void updateProfileByAdminEmptyBody () throws Exception {
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+
+        mockMvc.perform(patch("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isUnprocessableEntity());
     }
 }

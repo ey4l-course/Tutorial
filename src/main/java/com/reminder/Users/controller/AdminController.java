@@ -83,11 +83,11 @@ public class AdminController {
     }
 
     @PatchMapping
-    public ResponseEntity<?> editUserProfile (@RequestBody AdminEditProfileDTO userProfile,
+    public ResponseEntity<?> editUserProfile (@RequestBody (required = false) AdminEditProfileDTO userProfile,
                                               HttpServletRequest request){
         RequestContextDTO contextDTO = contextHandler(request);
         try {
-            CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication();
+            CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             Long userId = userDetails.getUserId();
             usersService.updateUserProfile(userProfile, userId);
             contextDTO.setOutcome("[SUCCESS] status: 202, User " + userId + "successfully updated");
@@ -97,6 +97,7 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(e.getMessage());
         }catch (Exception e){
             contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
+            System.out.println(e);
             String uuid = logUtil.error(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }

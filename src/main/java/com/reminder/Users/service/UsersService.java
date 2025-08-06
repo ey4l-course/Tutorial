@@ -11,8 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Field;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -130,6 +130,24 @@ public class UsersService {
                 throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
     }
 
+    private void validateAdminUpdate(AdminEditProfileDTO user) {
+        if (user == null)
+            throw new IllegalArgumentException("No arguments to update");
+        if (user.getGivenName() != null && !user.getGivenName().isEmpty())
+            if (!validName.matcher(user.getGivenName()).matches())
+                throw new IllegalArgumentException("Given name must be 3-20 character length, may include additional name separated by single space and cannot be blank");
+        if (user.getSurname() != null && !user.getSurname().isEmpty())
+            if (!validName.matcher(user.getSurname()).matches())
+                throw new IllegalArgumentException("Surname must be 3-20 character length, may include additional name separated by single space and cannot be blank");
+        if (user.getEmail() != null && !user.getEmail().isEmpty())
+            if (!validEmail.matcher(user.getEmail()).matches() && user.getEmail() != null && !user.getEmail().isEmpty())
+                throw new IllegalArgumentException("Invalid E-mail address");
+        if (user.getMobile() != null && !user.getMobile().isEmpty())
+            if (!validMobile.matcher(user.getMobile()).matches() && user.getMobile() != null && !user.getMobile().isEmpty())
+                throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
+    }
+
+
     private int determineServiceLevel(String email, String mobile) {
         boolean condition1 = (email != null && !email.isEmpty());
         boolean condition2 = (mobile != null && !mobile.isEmpty());
@@ -149,14 +167,7 @@ public class UsersService {
         return newProfile;
     }
 
-    private AdminEditProfileDTO mergeProfilesAdmin (AdminEditProfileDTO newProfile, Long userId){
-        UserCrm existingProfile = usersRepository.getUserProfileById(userId);
-        for (Field field : newProfile.getClass().getDeclaredFields()){
-            field.setAccessible(true);
-            //TODO: iterate and assign existing values for null fields
-        }
-        return newProfile;
-    }
+
 
     public List<UserCrm> getAllProfiles() {
         return usersRepository.getAllProfiles();
@@ -171,6 +182,48 @@ public class UsersService {
     }
 
     public void updateUserProfile(AdminEditProfileDTO userProfile, Long userId) {
-        usersRepository.updateProfile(userProfile, userId);
+        validateAdminUpdate(userProfile);
+        StringBuilder sqlBuilder = new StringBuilder("UPDATE user_crm SET");
+        List<Object> params = new ArrayList<>();
+        boolean first = true;
+        if (userProfile.getGivenName() != null && !userProfile.getGivenName().isEmpty()){
+            sqlBuilder.append(" given_name = ?");
+            params.add(userProfile.getGivenName());
+            first = false;
+        }
+        if (userProfile.getSurname() != null && !userProfile.getSurname().isEmpty()){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" surname = ?");
+            params.add(userProfile.getSurname());
+            first = false;
+        }
+        if (userProfile.getEmail() != null && !userProfile.getEmail().isEmpty()){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" email_address = ?");
+            params.add(userProfile.getEmail());
+            first = false;
+        }
+        if (userProfile.getMobile() != null && !userProfile.getMobile().isEmpty()){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" mobile = ?");
+            params.add(userProfile.getMobile());
+            first = false;
+        }
+        if (userProfile.getServiceLevel() != 0){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" service_level = ?");
+            params.add(userProfile.getServiceLevel());
+            first = false;
+        }
+        if (first)
+            throw new IllegalArgumentException ("No arguments to update");
+        sqlBuilder.append(" WHERE id = ?");
+        params.add(userId);
+        String sql = sqlBuilder.toString();
+        usersRepository.updateProfile(sql, params);
     }
 }

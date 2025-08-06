@@ -11,7 +11,6 @@ public class AdminEditProfileDTO {
     public AdminEditProfileDTO(Long id) {
         this.id = id;
     }
-
     public Long getId() {
         return id;
     }
@@ -55,8 +54,19 @@ public class AdminEditProfileDTO {
     public int getServiceLevel() {
         return serviceLevel;
     }
-
     public void setServiceLevel(int serviceLevel) {
         this.serviceLevel = serviceLevel;
+    }
+
+    @Override
+    public String toString() {
+        return "AdminEditProfileDTO{" +
+                "id=" + id +
+                ", givenName='" + givenName + '\'' +
+                ", surname='" + surname + '\'' +
+                ", email='" + email + '\'' +
+                ", mobile='" + mobile + '\'' +
+                ", serviceLevel=" + serviceLevel +
+                '}';
     }
 }

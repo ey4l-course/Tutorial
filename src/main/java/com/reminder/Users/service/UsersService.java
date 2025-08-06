@@ -226,4 +226,12 @@ public class UsersService {
         String sql = sqlBuilder.toString();
         usersRepository.updateProfile(sql, params);
     }
+
+    public String setActiveStatus(Long id, boolean isActive) {
+        String wanted = isActive ? "activated" : "deactivated";
+        boolean currentStatus = usersRepository.checkStatus(id);
+        if ((isActive && currentStatus) || (!isActive && !currentStatus))
+            throw new IllegalArgumentException(String.format("User %s already %s.", id, wanted));
+        return String.format("User %s successfully %s", id, wanted);
+    }
 }

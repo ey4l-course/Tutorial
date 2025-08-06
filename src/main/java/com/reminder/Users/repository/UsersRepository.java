@@ -151,4 +151,9 @@ public class UsersRepository {
     public void updateProfile(String sql, List<Object> params) {
         jdbcTemplate.update(sql, params.toArray());
     }
+
+    public boolean checkStatus(Long id) {
+        String sql = String.format("SELECT is_active from %s WHERE user_id = ?", LOGIN);
+        return jdbcTemplate.queryForObject(sql, boolean.class, id);
+    }
 }

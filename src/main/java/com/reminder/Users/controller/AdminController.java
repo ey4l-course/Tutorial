@@ -87,8 +87,7 @@ public class AdminController {
                                               HttpServletRequest request){
         RequestContextDTO contextDTO = contextHandler(request);
         try {
-            CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-            Long userId = userDetails.getUserId();
+            Long userId = userProfile.getId();
             usersService.updateUserProfile(userProfile, userId);
             contextDTO.setOutcome("[SUCCESS] status: 202, User " + userId + "successfully updated");
             return ResponseEntity.status(HttpStatus.ACCEPTED).body("User " + userId + "Successfully updated.");
@@ -102,6 +101,27 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
+
+    @PatchMapping("/activation/{id}/{isActive}")
+    public ResponseEntity<?> activateDeactivate (@PathVariable Long id,
+                                                 @PathVariable boolean isActive,
+                                                 HttpServletRequest request){
+        RequestContextDTO contextDTO = contextHandler(request);
+        try {
+            String result = usersService.setActiveStatus(id, isActive);
+            contextDTO.setOutcome("[SUCCESS] status 202, user " + id + " " + result);
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(result);
+        }catch (IllegalArgumentException e){
+            contextDTO.setOutcome("[FAILED] status 409, " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
+            System.out.println(e);
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
+
 
     private RequestContextDTO contextHandler (HttpServletRequest request){
         RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");

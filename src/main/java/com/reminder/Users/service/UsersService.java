@@ -92,11 +92,11 @@ public class UsersService {
         //For test
         if (!dto.getPassword().equals(storedHash))
             throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
+        //For prod: comment out when testing
 //        if (!encoder.matches(dto.getPassword(),storedHash))
 //            throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
-        if (usersRepository.adminGetProfileById(dto.getId()) == null)
+        if (usersRepository.deleteAccount(dto.getId()) == 0)
             throw new  IllegalArgumentException("User not found");
-        usersRepository.deleteAccount(dto.getId());
     }
     /*
                 *****************

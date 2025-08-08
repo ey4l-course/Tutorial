@@ -251,4 +251,148 @@ public class AdminPanelIntegrationTest {
                         .header("Refresh", "Bearer " + refresh))
                 .andExpect(status().isConflict());
     }
+
+    @Test
+    void createSpecialUserSuccess () throws Exception{
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+        String requestBody = "{\n" +
+                "        \"userName\":\"JoeC241\",\n" +
+                "        \"password\":\"InitialP@ssw0rd\",\n" +
+                "        \"role\":\"admin\",\n" +
+                "        \"isActive\":\"true\"\n" +
+                "        }";
+
+        mockMvc.perform(put("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isCreated())
+                .andDo(print());
+    }
+    @Test
+    void createSpecialUserUnlawful() throws Exception{
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+        String requestBody = "{\n" +
+                "        \"userName\":\"JoeC241\",\n" +
+                "        \"password\":\"InitialP@ssw0rd\",\n" +
+                "        \"role\":\"user\",\n" +
+                "        \"isActive\":\"true\"\n" +
+                "        }";
+
+        mockMvc.perform(put("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void createSpecialUserExistingUser() throws Exception{
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+        String requestBody = "{\n" +
+                "        \"userName\":\"aliceg\",\n" +
+                "        \"password\":\"InitialP@ssw0rd\",\n" +
+                "        \"role\":\"admin\",\n" +
+                "        \"isActive\":\"true\"\n" +
+                "        }";
+
+        mockMvc.perform(put("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isBadRequest());
+    }
+    @Test
+    void createSpecialUserInvalidCredential() throws Exception{
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+        String requestBody = "{\n" +
+                "        \"userName\":\"alic  eg\",\n" +
+                "        \"password\":\"InitialP@ssw0rd\",\n" +
+                "        \"role\":\"admin\",\n" +
+                "        \"isActive\":\"true\"\n" +
+                "        }";
+
+        mockMvc.perform(put("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+    @Test
+    void deleteUser () throws Exception {
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+        String requestBody = "{\"id\":2, \"userName\":\"aliceg\", \"password\":\"HASHED_1\"}";
+
+        mockMvc.perform(delete("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/admin/user?given-name=Ben")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(jsonPath("$").isEmpty())
+                .andDo(print());
+    }
+    @Test
+    void deleteUserNotFound () throws Exception {
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+        String requestBody = "{\"id\":12, \"userName\":\"aliceg\", \"password\":\"HASHED_1\"}";
+
+        mockMvc.perform(delete("/admin")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isNotFound())
+                .andDo(print());
+        mockMvc.perform(get("/admin/user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(jsonPath("$").isNotEmpty())
+                .andDo(print());
+    }
+
+    @Test
+    void searchUser () throws Exception {
+        String access = jwtUtil.generateJwtToken("aliceg", "admin");
+        String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
+
+        mockMvc.perform(get("/admin/user?active=true&&role=user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isOk())
+                .andDo(print());
+        mockMvc.perform(get("/admin/user?active=true")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isOk())
+                .andDo(print());
+        mockMvc.perform(get("/admin/user?role=user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + access)
+                        .header("Refresh", "Bearer " + refresh))
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
 }

@@ -178,8 +178,8 @@ public class AdminController {
             contextDTO.setOutcome("[SUCCESS] status: 200, User account successfully deleted, uuid: " + uuid);
             return ResponseEntity.status(HttpStatus.OK).body("User successfully deleted, uuid: " + uuid);
         }catch (IllegalArgumentException e){
-            contextDTO.setOutcome("[Failed] status: 404. User with ID " + dto.getId() + " not found");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with ID " + " not found");
+            contextDTO.setOutcome("[Failed] status: 404. User with ID " + dto.getId() + ": " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with ID " + ": " + e.getMessage());
         }catch (AccessDeniedException e){
             String uuid = logUtil.securityLog(e.getMessage());
             contextDTO.setOutcome("[REJECTED] status 403, " + e.getMessage() + ", uuid: " + uuid);

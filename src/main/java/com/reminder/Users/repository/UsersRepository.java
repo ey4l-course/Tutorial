@@ -158,7 +158,6 @@ public class UsersRepository {
     }
 
     public Long saveSpecial(UserLogin user) {
-        try {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             String sql = String.format("INSERT INTO %s (user_name, hashed_password, role, is_active) VALUES (?, ?, ?, ?)", LOGIN);
             jdbcTemplate.update(con -> {
@@ -170,8 +169,9 @@ public class UsersRepository {
                 return ps;
             }, keyHolder);
             return keyHolder.getKeyAs(Long.class);
-        }catch (DataIntegrityViolationException e){
-            throw new IllegalArgumentException("User-name already taken");
-        }
+    }
+
+    public List<UserLogin> searchUser(String sql, List<Object> params) {
+        return jdbcTemplate.query(sql, params.toArray(), new UserLoginMapper());
     }
 }

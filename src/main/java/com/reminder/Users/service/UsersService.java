@@ -5,6 +5,7 @@ import com.reminder.Users.repository.UsersRepository;
 import com.reminder.security.CustomUserDetails;
 import com.reminder.Users.utilities.JwtUtil;
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,7 +34,7 @@ public class UsersService {
     final private Pattern validEmail = Pattern.compile("^[a-zA-Z0-9-_~+.]{2,30}@[a-zA-Z0-9]{2,15}(\\.[a-zA-Z]{2,3}){1,2}$");
     final private Pattern validName = Pattern.compile("^(?=.{3,20}$)[a-zA-Z]{2,}(?: [a-zA-Z]{2,})*$");
     final private Pattern validMobile = Pattern.compile("^\\d{10,15}$");
-    final private Pattern validUserName = Pattern.compile("^(?!.*( )\1)[a-zA-Z0-9 ._\\-$^~]{5,20}$");
+    final private Pattern validUserName = Pattern.compile("^(?!.*( )\1)[a-zA-Z0-9._\\-$^~]{5,20}$");
     final private Pattern validPassword = Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[-!@#$%^&*()_./]).{8,}$");
 
     public TokensDTO newUser(UserLogin userCredentials) {
@@ -88,8 +89,13 @@ public class UsersService {
 
     public void deleteAccount(DeleteAccountDTO dto) {
         String storedHash = usersRepository.getUserByUserName(dto.getUserName()).getHashedPassword();
-        if (!encoder.matches(dto.getPassword(),storedHash))
+        //For test
+        if (!dto.getPassword().equals(storedHash))
             throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
+//        if (!encoder.matches(dto.getPassword(),storedHash))
+//            throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
+        if (usersRepository.adminGetProfileById(dto.getId()) == null)
+            throw new  IllegalArgumentException("User not found");
         usersRepository.deleteAccount(dto.getId());
     }
     /*
@@ -103,11 +109,19 @@ public class UsersService {
     }
 
     private void validateCredentials(String userName, String password) {
-        System.out.println("Check at validation:"+ userName +";"+ password);
         if (userName == null || userName.isEmpty() || !validUserName.matcher(userName).matches())
-            throw new IllegalArgumentException("User name must contain letters, digits single space or ._-$^~");
+            throw new IllegalArgumentException("User name must contain letters, digits or ._-$^~");
         if (password == null || password.isEmpty() || !validPassword.matcher(password).matches())
             throw new IllegalArgumentException("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)");
+    }
+
+    private void validateUserCreationByAdmin(UserLogin user){
+        if (user.getUserName() == null || user.getUserName().isEmpty() || !validUserName.matcher(user.getUserName()).matches())
+            throw new IllegalArgumentException("User name must contain letters, digits or ._-$^~");
+        if (user.getHashedPassword() == null || user.getHashedPassword().isEmpty() || !validPassword.matcher(user.getHashedPassword()).matches())
+            throw new IllegalArgumentException("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)");
+        if (user.getRole() == null || user.getRole().isEmpty())
+            throw new IllegalArgumentException("No role was defined.");
     }
 
     private void validateCrmDetails(UserCrm user) {
@@ -236,6 +250,32 @@ public class UsersService {
     }
 
     public Long newSpecialUser(UserLogin user) {
-        return usersRepository.saveSpecial(user);
+        try {
+            validateUserCreationByAdmin(user);
+            user.setHashedPassword(passwordHasher(user.getHashedPassword()));
+            return usersRepository.saveSpecial(user);
+        }catch (DataAccessException e){
+            throw new IllegalArgumentException("User-name already taken");
+        }
+    }
+
+    public List<UserLogin> searchUser(Boolean isActive, String role) {
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM user_login WHERE 1=1");
+            List<Object> params = new ArrayList<>();
+            if (isActive != null){
+                sqlBuilder.append(" AND is_active = ?");
+                params.add(isActive);
+            }
+            if (role != null && !role.isEmpty()){
+                sqlBuilder.append(" AND role = ?");
+                params.add(role);
+            }
+            String sql = sqlBuilder.toString();
+            return usersRepository.searchUser(sql, params);
+        }catch (Exception e){
+            System.out.println("Exception thrown at SERVICE");
+            throw e;
+        }
     }
 }

@@ -48,7 +48,7 @@ public class AdminController {
             contextDTO.setOutcome("[SUCCESS] status: 200, Profile retrieved for: " + result.getGivenName() + " " + result.getSurname());
             return ResponseEntity.status(HttpStatus.OK).body(result);
         }catch (EmptyResultDataAccessException e){
-            contextDTO.setOutcome("[Failed] status: 404. User with ID " + " not found");
+            contextDTO.setOutcome("[Failed] status: 404. User with ID " + id + " not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with ID " + " not found");
         }catch (Exception e){
             contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
@@ -57,7 +57,7 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/user")
+    @GetMapping("/profile")
     public ResponseEntity<?> GetProfilesByQuery (@RequestParam(value = "given-name", required = false) String givenName,
                                                  @RequestParam(value = "surname", required = false) String surname,
                                                  @RequestParam(value = "service-level", required = false) Integer serviceLevel,
@@ -71,6 +71,28 @@ public class AdminController {
             int level = serviceLevel == null ? 0 : serviceLevel;
             SearchProfileDTO search = new SearchProfileDTO(givenName, surname, level);
             List<UserCrm> result = usersService.searchProfile(search);
+            contextDTO.setOutcome("[SUCCESS] status: 200, " + result.size() + " entries retrieved");
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        }catch (Exception e){
+            contextDTO.setOutcome("[REJECTED] status: 500, " + e.getMessage());
+            String uuid = logUtil.error(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
+        }
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<?> searchUsers (@RequestParam (value = "active", required = false) Boolean isActive,
+                                          @RequestParam (value = "role", required = false) String role,
+                                          HttpServletRequest request){
+        RequestContextDTO contextDTO = contextHandler(request);
+        boolean emptyParams = isActive == null && (role == null || role.isEmpty());
+        boolean noParams = request.getParameterMap().isEmpty() || request.getParameterMap() == null;
+        if (emptyParams || noParams) {
+            contextDTO.setOutcome("[REJECTED] status 418, no search parameters found: " + request.getPathInfo());
+            return ResponseEntity.status(HttpStatus.I_AM_A_TEAPOT).body("You should re-check URI: " + request.getPathInfo());
+        }
+        try {
+            List<UserLogin> result = usersService.searchUser(isActive, role);
             contextDTO.setOutcome("[SUCCESS] status: 200, " + result.size() + " entries retrieved");
             return ResponseEntity.status(HttpStatus.OK).body(result);
         }catch (Exception e){
@@ -126,7 +148,7 @@ public class AdminController {
         //Create admin or app user
     RequestContextDTO contextDTO = contextHandler(request);
         try {
-            if (user.getRole() == "user") {
+            if ("user".equals(user.getRole())) {
                 String uuid = logUtil.securityLog(contextDTO.getUserName() + " Attempted to create regular user " + user.toString());
                 contextDTO.setOutcome("[REJECTED] status: 403, Violation detected. security log: " + uuid);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Incident reported ref: " + uuid);
@@ -146,15 +168,18 @@ public class AdminController {
     }
 
     @DeleteMapping
-    public ResponseEntity<?> deleteAccountByAdmin (DeleteAccountDTO dto,
+    public ResponseEntity<?> deleteAccountByAdmin (@RequestBody DeleteAccountDTO dto,
                                                    HttpServletRequest request){
         RequestContextDTO contextDTO = contextHandler(request);
         try {
             dto.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
             usersService.deleteAccount(dto);
-            String uuid = logUtil.securityLog(dto.getUserName() + "successfully deleted the account.");
+            String uuid = logUtil.securityLog(dto.getUserName() + " successfully deleted the account.");
             contextDTO.setOutcome("[SUCCESS] status: 200, User account successfully deleted, uuid: " + uuid);
             return ResponseEntity.status(HttpStatus.OK).body("User successfully deleted, uuid: " + uuid);
+        }catch (IllegalArgumentException e){
+            contextDTO.setOutcome("[Failed] status: 404. User with ID " + dto.getId() + " not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with ID " + " not found");
         }catch (AccessDeniedException e){
             String uuid = logUtil.securityLog(e.getMessage());
             contextDTO.setOutcome("[REJECTED] status 403, " + e.getMessage() + ", uuid: " + uuid);
@@ -166,7 +191,6 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
-
 
     private RequestContextDTO contextHandler (HttpServletRequest request){
         RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");

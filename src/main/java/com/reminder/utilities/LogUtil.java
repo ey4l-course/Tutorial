@@ -27,6 +27,7 @@ public class LogUtil {
         this.objectMapper = objectMapper;
     }
 
+
     public String error (Exception e){
         String uuid = UUID.randomUUID().toString();
         StackTraceElement origin = Arrays.stream(e.getStackTrace())

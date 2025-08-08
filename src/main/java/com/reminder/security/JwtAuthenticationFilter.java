@@ -58,7 +58,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         //May set error message
         authService.TokenUserNameHandler (responseDTO, jwtConfig.getHeader().getPrefix());
         contextDTO.setUserName(responseDTO.getUserName());
-
         if (responseDTO.getStatusCode() >= 200 && responseDTO.getStatusCode() <= 299){
             authService.setSecurityContext(responseDTO);
         }

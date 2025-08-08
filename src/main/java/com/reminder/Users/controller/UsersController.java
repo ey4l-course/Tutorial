@@ -2,17 +2,14 @@ package com.reminder.Users.controller;
 
 import com.reminder.Users.model.*;
 import com.reminder.Users.service.UsersService;
-import com.reminder.Users.utilities.JwtUtil;
 import com.reminder.security.CustomUserDetails;
 import com.reminder.utilities.LogUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,9 +22,6 @@ public class UsersController {
     LogUtil logUtil;
     @Autowired
     UsersService usersService;
-    @Autowired
-    JwtUtil jwtUtil;
-
 
     @PostMapping
     public ResponseEntity<?> newUserCredentials (@RequestBody UserLogin userLogin,

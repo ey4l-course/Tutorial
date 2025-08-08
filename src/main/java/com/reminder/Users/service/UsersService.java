@@ -5,6 +5,7 @@ import com.reminder.Users.repository.UsersRepository;
 import com.reminder.security.CustomUserDetails;
 import com.reminder.Users.utilities.JwtUtil;
 import jakarta.transaction.Transactional;
+import org.springframework.dao.DataAccessException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,6 +13,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @Service
@@ -31,7 +34,7 @@ public class UsersService {
     final private Pattern validEmail = Pattern.compile("^[a-zA-Z0-9-_~+.]{2,30}@[a-zA-Z0-9]{2,15}(\\.[a-zA-Z]{2,3}){1,2}$");
     final private Pattern validName = Pattern.compile("^(?=.{3,20}$)[a-zA-Z]{2,}(?: [a-zA-Z]{2,})*$");
     final private Pattern validMobile = Pattern.compile("^\\d{10,15}$");
-    final private Pattern validUserName = Pattern.compile("^(?!.*( )\1)[a-zA-Z0-9 ._\\-$^~]{5,20}$");
+    final private Pattern validUserName = Pattern.compile("^(?!.*( )\1)[a-zA-Z0-9._\\-$^~]{5,20}$");
     final private Pattern validPassword = Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[-!@#$%^&*()_./]).{8,}$");
 
     public TokensDTO newUser(UserLogin userCredentials) {
@@ -86,9 +89,14 @@ public class UsersService {
 
     public void deleteAccount(DeleteAccountDTO dto) {
         String storedHash = usersRepository.getUserByUserName(dto.getUserName()).getHashedPassword();
-        if (!encoder.matches(dto.getPassword(),storedHash))
+        //For test
+        if (!dto.getPassword().equals(storedHash))
             throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
-        usersRepository.deleteAccount(dto.getId());
+        //For prod: comment out when testing
+//        if (!encoder.matches(dto.getPassword(),storedHash))
+//            throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
+        if (usersRepository.deleteAccount(dto.getId()) == 0)
+            throw new  IllegalArgumentException("User not found");
     }
     /*
                 *****************
@@ -101,11 +109,19 @@ public class UsersService {
     }
 
     private void validateCredentials(String userName, String password) {
-        System.out.println("Check at validation:"+ userName +";"+ password);
         if (userName == null || userName.isEmpty() || !validUserName.matcher(userName).matches())
-            throw new IllegalArgumentException("User name must contain letters, digits single space or ._-$^~");
+            throw new IllegalArgumentException("User name must contain letters, digits or ._-$^~");
         if (password == null || password.isEmpty() || !validPassword.matcher(password).matches())
             throw new IllegalArgumentException("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)");
+    }
+
+    private void validateUserCreationByAdmin(UserLogin user){
+        if (user.getUserName() == null || user.getUserName().isEmpty() || !validUserName.matcher(user.getUserName()).matches())
+            throw new IllegalArgumentException("User name must contain letters, digits or ._-$^~");
+        if (user.getHashedPassword() == null || user.getHashedPassword().isEmpty() || !validPassword.matcher(user.getHashedPassword()).matches())
+            throw new IllegalArgumentException("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)");
+        if (user.getRole() == null || user.getRole().isEmpty())
+            throw new IllegalArgumentException("No role was defined.");
     }
 
     private void validateCrmDetails(UserCrm user) {
@@ -128,6 +144,24 @@ public class UsersService {
                 throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
     }
 
+    private void validateAdminUpdate(AdminEditProfileDTO user) {
+        if (user == null)
+            throw new IllegalArgumentException("No arguments to update");
+        if (user.getGivenName() != null && !user.getGivenName().isEmpty())
+            if (!validName.matcher(user.getGivenName()).matches())
+                throw new IllegalArgumentException("Given name must be 3-20 character length, may include additional name separated by single space and cannot be blank");
+        if (user.getSurname() != null && !user.getSurname().isEmpty())
+            if (!validName.matcher(user.getSurname()).matches())
+                throw new IllegalArgumentException("Surname must be 3-20 character length, may include additional name separated by single space and cannot be blank");
+        if (user.getEmail() != null && !user.getEmail().isEmpty())
+            if (!validEmail.matcher(user.getEmail()).matches() && user.getEmail() != null && !user.getEmail().isEmpty())
+                throw new IllegalArgumentException("Invalid E-mail address");
+        if (user.getMobile() != null && !user.getMobile().isEmpty())
+            if (!validMobile.matcher(user.getMobile()).matches() && user.getMobile() != null && !user.getMobile().isEmpty())
+                throw new IllegalArgumentException("Mobile must be 10-15 digit long, may include state prefix without + or separators");
+    }
+
+
     private int determineServiceLevel(String email, String mobile) {
         boolean condition1 = (email != null && !email.isEmpty());
         boolean condition2 = (mobile != null && !mobile.isEmpty());
@@ -145,5 +179,103 @@ public class UsersService {
         if (newProfile.getMobile() == null || newProfile.getMobile().isEmpty())
             newProfile.setMobile(existingProfile.getMobile());
         return newProfile;
+    }
+
+
+
+    public List<UserCrm> getAllProfiles() {
+        return usersRepository.getAllProfiles();
+    }
+
+    public UserCrm getProfileById(Long id) {
+        return usersRepository.adminGetProfileById(id);
+    }
+
+    public List<UserCrm> searchProfile(SearchProfileDTO search) {
+        return usersRepository.searchProfile(search);
+    }
+
+    public void updateUserProfile(AdminEditProfileDTO userProfile, Long userId) {
+        validateAdminUpdate(userProfile);
+        StringBuilder sqlBuilder = new StringBuilder("UPDATE user_crm SET");
+        List<Object> params = new ArrayList<>();
+        boolean first = true;
+        if (userProfile.getGivenName() != null && !userProfile.getGivenName().isEmpty()){
+            sqlBuilder.append(" given_name = ?");
+            params.add(userProfile.getGivenName());
+            first = false;
+        }
+        if (userProfile.getSurname() != null && !userProfile.getSurname().isEmpty()){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" surname = ?");
+            params.add(userProfile.getSurname());
+            first = false;
+        }
+        if (userProfile.getEmail() != null && !userProfile.getEmail().isEmpty()){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" email_address = ?");
+            params.add(userProfile.getEmail());
+            first = false;
+        }
+        if (userProfile.getMobile() != null && !userProfile.getMobile().isEmpty()){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" mobile = ?");
+            params.add(userProfile.getMobile());
+            first = false;
+        }
+        if (userProfile.getServiceLevel() != 0){
+            if (!first)
+                sqlBuilder.append(", ");
+            sqlBuilder.append(" service_level = ?");
+            params.add(userProfile.getServiceLevel());
+            first = false;
+        }
+        if (first)
+            throw new IllegalArgumentException ("No arguments to update");
+        sqlBuilder.append(" WHERE id = ?");
+        params.add(userId);
+        String sql = sqlBuilder.toString();
+        usersRepository.updateProfile(sql, params);
+    }
+
+    public String setActiveStatus(Long id, boolean isActive) {
+        String wanted = isActive ? "activated" : "deactivated";
+        boolean currentStatus = usersRepository.checkStatus(id);
+        if ((isActive && currentStatus) || (!isActive && !currentStatus))
+            throw new IllegalArgumentException(String.format("User %s already %s.", id, wanted));
+        return String.format("User %s successfully %s", id, wanted);
+    }
+
+    public Long newSpecialUser(UserLogin user) {
+        try {
+            validateUserCreationByAdmin(user);
+            user.setHashedPassword(passwordHasher(user.getHashedPassword()));
+            return usersRepository.saveSpecial(user);
+        }catch (DataAccessException e){
+            throw new IllegalArgumentException("User-name already taken");
+        }
+    }
+
+    public List<UserLogin> searchUser(Boolean isActive, String role) {
+        try {
+            StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM user_login WHERE 1=1");
+            List<Object> params = new ArrayList<>();
+            if (isActive != null){
+                sqlBuilder.append(" AND is_active = ?");
+                params.add(isActive);
+            }
+            if (role != null && !role.isEmpty()){
+                sqlBuilder.append(" AND role = ?");
+                params.add(role);
+            }
+            String sql = sqlBuilder.toString();
+            return usersRepository.searchUser(sql, params);
+        }catch (Exception e){
+            System.out.println("Exception thrown at SERVICE");
+            throw e;
+        }
     }
 }

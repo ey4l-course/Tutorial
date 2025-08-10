@@ -1,0 +1,53 @@
+server:
+  port: 8080
+
+app:
+  tables:
+    transactions: transactions_table
+    usersDetails: user_crm
+    UsersCredentials: user_login
+    commonIpAddresses: common_ip
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:userdb;
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 123
+  h2:
+    console:
+      enabled: true
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+
+logging:
+  level:
+    root: INFO
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} - %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/Application.log
+    max-size: 10MB
+    max-history: 30
+
+jwt:
+  secret: temporary-secret-key-for-dev-additional-length-to-get-to-256-bit
+  access:
+    expiration: 90000 # 15 minutes
+  refresh:
+    expiration: 7200000 # 2 hours
+  header:
+    accessHeader: Authorization
+    refreshHeader: Refresh
+    prefix: "Bearer "
+  excludedPaths:
+    - "/h2-console/**"
+    - "/auth"

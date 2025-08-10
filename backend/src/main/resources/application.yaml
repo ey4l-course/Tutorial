@@ -4,8 +4,6 @@ server:
 app:
   tables:
     transactions: transactions_table
-    userDefined: user_transaction_classification
-    globalDefined: global_transaction_classification
     usersDetails: user_crm
     UsersCredentials: user_login
     commonIpAddresses: common_ip
@@ -43,7 +41,7 @@ logging:
 jwt:
   secret: temporary-secret-key-for-dev-additional-length-to-get-to-256-bit
   access:
-    expiration: 900000 # 15 minutes
+    expiration: 90000 # 15 minutes
   refresh:
     expiration: 7200000 # 2 hours
   header:
@@ -51,4 +49,5 @@ jwt:
     refreshHeader: Refresh
     prefix: "Bearer "
   excludedPaths:
-    - "/auth/**"
+    - "/h2-console/**"
+    - "/auth"

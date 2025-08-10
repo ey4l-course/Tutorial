@@ -1,139 +1,88 @@
 package com.reminder.Transactions.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDate;
 
-@Entity
 public class Transaction {
-    @Id
-    @GeneratedValue (strategy = GenerationType.IDENTITY)
-    private Long id;
-    @NotNull
-    @Column (name = "user_id")
-    private Long userId;
-    @NotNull
-    @Column (name = "txn_time", nullable = false)
-    private Instant txnTime;
-    @NotNull
-    @Size(max = 20)
-    @Column (name = "description", nullable = false)
+    private int id;
+    @JsonProperty(value = "txn_time")
+    private LocalDate txnTime;
     private String description;
-    @NotNull
-    @Column (name = "amount", nullable = false)
     private BigDecimal amount;
-    @NotNull
-    @Column (name = "category_id", nullable = false)
-    private Long category;
-    @NotNull
-    @Column (name = "category_source", nullable = false)
-    private  CategorySource categorySource;
-    @Column (name = "unique_weight")
-    private int uniqueWeight;
-    @NotNull
-    @Size (max = 20)
-    @Column (name = "payment_method", nullable = false)
-    private String paymentMethod;
-    @Column (name = "comment", nullable = true)
-    @Size (max = 50)
+    private String category;
     private String comment;
-    @Column (name = "regular")
-    private Boolean isRegular;
 
     public Transaction() {
     }
 
-    public Long getId() {
+    public Transaction(int id, LocalDate txnTime, String description, BigDecimal amount, String category, String comment) {
+        this.id = id;
+        this.txnTime = txnTime;
+        this.description = description.toLowerCase();
+        this.amount = amount;
+        this.category = category.toLowerCase();
+        this.comment = comment.toLowerCase();
+    }
+
+    public int getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
-
-    public @NotNull Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(@NotNull Long userId) {
-        this.userId = userId;
-    }
-
-    public @NotNull Instant getTxnTime() {
+    public LocalDate getTxnTime() {
         return txnTime;
     }
 
-    public void setTxnTime(@NotNull Instant txnTime) {
+    public void setTxnTime(LocalDate txnTime) {
         this.txnTime = txnTime;
     }
 
-    public @NotNull @Size(max = 20) String getDescription() {
-        return description;
-    }
-
-    public void setDescription(@NotNull @Size(max = 20) String description) {
-        this.description = description;
-    }
-
-    public @NotNull BigDecimal getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(@NotNull BigDecimal amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
-    public @NotNull Long getCategory() {
+    public String getCategory() {
         return category;
     }
 
-    public void setCategory(@NotNull Long category) {
-        this.category = category;
+    public void setCategory(String category) {
+        this.category = category.toLowerCase();
     }
 
-    public @NotNull CategorySource getCategorySource() {
-        return categorySource;
-    }
-
-    public void setCategorySource(@NotNull CategorySource categorySource) {
-        this.categorySource = categorySource;
-    }
-
-    public int getUniqueWeight() {
-        return uniqueWeight;
-    }
-
-    public void setUniqueWeight(int uniqueWeight) {
-        this.uniqueWeight = uniqueWeight;
-    }
-
-    public @NotNull @Size(max = 20) String getPaymentMethod() {
-        return paymentMethod;
-    }
-
-    public void setPaymentMethod(@NotNull @Size(max = 20) String paymentMethod) {
-        this.paymentMethod = paymentMethod;
-    }
-
-    public @Size(max = 50) String getComment() {
+    public String getComment() {
         return comment;
     }
 
-    public void setComment(@Size(max = 50) String comment) {
-        this.comment = comment;
+    public void setComment(String comment) {
+        this.comment = comment.toLowerCase();
     }
 
-    public Boolean getRegular() {
-        return isRegular;
+    public String getDescription() {
+        return description;
     }
 
-    public void setRegular(Boolean regular) {
-        isRegular = regular;
+    public void setDescription(String description) {
+        this.description = description.toLowerCase();
+    }
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "id=" + id +
+                ", txnTime=" + txnTime +
+                ", amount=" + amount +
+                ", category='" + category + '\'' +
+                ", comment='" + comment + '\'' +
+                '}';
     }
 }
 

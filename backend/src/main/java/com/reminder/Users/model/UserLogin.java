@@ -20,7 +20,7 @@ public class UserLogin {
     @NotNull
     @Column (name = "hashed_password", nullable = false)
     @JsonProperty("password")
-    private String password;
+    private String hashedPassword;
     @NotNull
     @Column (name = "role", nullable = false)
     private String role;
@@ -40,7 +40,7 @@ public class UserLogin {
         this.id = id;
         this.userId = userId;
         this.userName = userName;
-        this.password = hashedPassword;
+        this.hashedPassword = hashedPassword;
         this.role = role;
         this.isActive = isActive;
     }
@@ -69,12 +69,12 @@ public class UserLogin {
         this.userName = userName;
     }
 
-    public String getPassword() {
-        return password;
+    public String getHashedPassword() {
+        return hashedPassword;
     }
 
-    public void setPassword(String hashedPassword) {
-        this.password = hashedPassword;
+    public void setHashedPassword(String hashedPassword) {
+        this.hashedPassword = hashedPassword;
     }
 
     public boolean isActive() {
@@ -99,7 +99,7 @@ public class UserLogin {
                 "id=" + id +
                 ", userId='" + userId + '\'' +
                 ", userName='" + userName + '\'' +
-                ", hashedPassword='" + password + '\'' +
+                ", hashedPassword='" + hashedPassword + '\'' +
                 ", role='" + role +'\'' +
                 ", isActive=" + isActive +
                 '}';

@@ -4,6 +4,7 @@ server:
 app:
   tables:
     transactions: transactions_table
+    userDefined: user_transaction_classification
     usersDetails: user_crm
     UsersCredentials: user_login
     commonIpAddresses: common_ip

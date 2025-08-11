@@ -1,6 +1,7 @@
 package com.reminder.Transactions.repository;
 
 import com.reminder.Transactions.model.Transaction;
+import com.reminder.Transactions.model.UserClassification;
 import com.reminder.Transactions.repository.mapper.TransactionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +11,8 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 
 @Repository
@@ -20,16 +23,23 @@ public class TransactionRepository {
     @Value("${app.tables.transactions}")
     private String TABLE;
 
+    @Value("${app.tables.userDefined}")
+    private String USER_DEFINED;
+
     public void save (Transaction transaction){
             KeyHolder keyHolder = new GeneratedKeyHolder();
-            String sql = "INSERT INTO " + TABLE + " (txn_time, description, amount, category, comment) VALUES (?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO " + TABLE + " (user_id, txn_time, description, amount, category_id, category_source, unique_weight, payment_method, comment)VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             jdbcTemplate.update(con -> {
                 PreparedStatement ps = con.prepareStatement(sql, new String[] {"id"});
-                ps.setDate(1, java.sql.Date.valueOf(transaction.getTxnTime()));
-                ps.setString(2, transaction.getDescription());
-                ps.setBigDecimal(3, transaction.getAmount());
-                ps.setString(4, transaction.getCategory());
-                ps.setString(5, transaction.getComment());
+                ps.setLong(1, transaction.getUserId());
+                ps.setTimestamp(2, Timestamp.from(Instant.now()));
+                ps.setString(3, transaction.getDescription());
+                ps.setBigDecimal(4, transaction.getAmount());
+                ps.setLong(5, transaction.getCategory());
+                ps.setString(6, String.valueOf(transaction.getCategorySource()));
+                ps.setInt(7, transaction.getUniqueWeight());
+                ps.setString(8, transaction.getPaymentMethod());
+                ps.setString(9, transaction.getComment());
                 return ps;
             }, keyHolder);
     }
@@ -55,5 +65,10 @@ public class TransactionRepository {
     public List<Transaction> getAllTransactions () {
         final String sql = "SELECT * FROM " + TABLE;
         return jdbcTemplate.query(sql, new TransactionMapper());
+    }
+
+    public Long userDefinedCategory(Long userId, String description) {
+        String sql = String.format("SELECT category FROM %s WHERE user_id = ? and description = ?", USER_DEFINED);
+        return jdbcTemplate.queryForObject(sql, Long.class, userId, description);
     }
 }

@@ -1,47 +1,70 @@
 package com.reminder.Transactions.service;
 
+import com.reminder.Transactions.model.CategorySource;
 import com.reminder.Transactions.model.Transaction;
 import com.reminder.Transactions.repository.TransactionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.reminder.Transactions.utilities.TxnUtility;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.util.List;
 
 @Service
 public class TransactionService {
-    @Autowired
-    private TransactionRepository transactionRepository;
-    private Transaction transaction;
+    private final TransactionRepository repo;
+    private final Transaction txn;
+    private final TxnUtility txnUtil;
 
-    public void newTransaction (Transaction transaction){
-        transaction.setAmount(transaction.getAmount().setScale(2, RoundingMode.HALF_DOWN));
-        validateFields(transaction);
-        transaction.setTxnTime(LocalDate.now());
-        transactionRepository.save(transaction);
+    public TransactionService (TransactionRepository repo,
+                               Transaction txn,
+                               TxnUtility txnUtil){
+        this.repo = repo;
+        this.txn = txn;
+        this.txnUtil = txnUtil;
     }
+
+    public void newTransaction (List<Transaction> transactions, Long userId){
+        for (Transaction txn : transactions)
+        {
+            validateFields(this.txn);
+            txn.setUserId(userId);
+            this.txn.setAmount(this.txn.getAmount().setScale(2, RoundingMode.HALF_DOWN));
+            if (txn.getCategory() == null) { //Means user did not choose category
+                txnUtil.txnCategoryNotSet(txn);
+            }else {
+                txn.setCategorySource(CategorySource.SPECIAL_CLASSIFICATION);
+                txn.setUniqueWeight(1);
+            }
+            repo.save(this.txn);
+        }
+    }
+
+    /*
+    TODO: Document: if new transaction category is 'null' -> user did not manually defined it;
+        if it has entry is user defined -> set it to current txn
+        else -> register under 'unclassified' (category 0)
+     */
 
     public void addComment (int id, String comment){
         if (comment.length() > 50)
             throw new IllegalArgumentException("Field comment too long (>50)");
-        transactionRepository.addComment(id, comment);
+        repo.addComment(id, comment);
     }
 
     public void changeCategory (int id, String category){
         if (category.length() > 10)
             throw new IllegalArgumentException("Field category too long (>10)");
-        transactionRepository.changeCategory(id, category);
+        repo.changeCategory(id, category);
     }
 
     public List<Transaction> getTxnPerCategory (String category){
         category = inputLowerCaser(category);
-        return transactionRepository.getTxnPerCategory(category);
+        return repo.getTxnPerCategory(category);
     }
 
     public List<Transaction> getAllTransactions(){
-        return transactionRepository.getAllTransactions();
+        return repo.getAllTransactions();
     }
 
     private void validateFields (Transaction transaction){
@@ -51,12 +74,10 @@ public class TransactionService {
             throw new IllegalArgumentException("Amount cannot be empty or 0");
         if (transaction.getAmount().movePointRight(2).toBigInteger().toString().length() > 12)
             throw new IllegalArgumentException("Amount is out of range " + transaction.getAmount());
-        if (transaction.getDescription().length() > 20)
-            throw new IllegalArgumentException("Field description too long (>20)");
-        if (transaction.getCategory().length() > 10)
-            throw new IllegalArgumentException("Field category too long (>10)");
         if (transaction.getComment().length() > 50)
             throw new IllegalArgumentException("Field comment too long (>50)");
+        if (transaction.getPaymentMethod() == null || transaction.getPaymentMethod().isEmpty())
+            throw new IllegalArgumentException("Payment method cannot be null");
     }
 
     private String inputLowerCaser (String str){

@@ -1,88 +1,139 @@
 package com.reminder.Transactions.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 
+@Entity
 public class Transaction {
-    private int id;
-    @JsonProperty(value = "txn_time")
-    private LocalDate txnTime;
+    @Id
+    @GeneratedValue (strategy = GenerationType.IDENTITY)
+    private Long id;
+    @NotNull
+    @Column (name = "user_id")
+    private Long userId;
+    @NotNull
+    @Column (name = "txn_time", nullable = false)
+    private Instant txnTime;
+    @NotNull
+    @Size(max = 20)
+    @Column (name = "description", nullable = false)
     private String description;
+    @NotNull
+    @Column (name = "amount", nullable = false)
     private BigDecimal amount;
-    private String category;
+    @NotNull
+    @Column (name = "category_id", nullable = false)
+    private Long category;
+    @NotNull
+    @Column (name = "category_source", nullable = false)
+    private  CategorySource categorySource;
+    @Column (name = "unique_weight")
+    private int uniqueWeight;
+    @NotNull
+    @Size (max = 20)
+    @Column (name = "payment_method", nullable = false)
+    private String paymentMethod;
+    @Column (name = "comment", nullable = true)
+    @Size (max = 50)
     private String comment;
+    @Column (name = "regular")
+    private Boolean isRegular;
 
     public Transaction() {
     }
 
-    public Transaction(int id, LocalDate txnTime, String description, BigDecimal amount, String category, String comment) {
-        this.id = id;
-        this.txnTime = txnTime;
-        this.description = description.toLowerCase();
-        this.amount = amount;
-        this.category = category.toLowerCase();
-        this.comment = comment.toLowerCase();
-    }
-
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
-    public LocalDate getTxnTime() {
+
+    public @NotNull Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(@NotNull Long userId) {
+        this.userId = userId;
+    }
+
+    public @NotNull Instant getTxnTime() {
         return txnTime;
     }
 
-    public void setTxnTime(LocalDate txnTime) {
+    public void setTxnTime(@NotNull Instant txnTime) {
         this.txnTime = txnTime;
     }
 
-    public BigDecimal getAmount() {
-        return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category.toLowerCase();
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment.toLowerCase();
-    }
-
-    public String getDescription() {
+    public @NotNull @Size(max = 20) String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description.toLowerCase();
+    public void setDescription(@NotNull @Size(max = 20) String description) {
+        this.description = description;
     }
 
-    @Override
-    public String toString() {
-        return "Transaction{" +
-                "id=" + id +
-                ", txnTime=" + txnTime +
-                ", amount=" + amount +
-                ", category='" + category + '\'' +
-                ", comment='" + comment + '\'' +
-                '}';
+    public @NotNull BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(@NotNull BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public @NotNull Long getCategory() {
+        return category;
+    }
+
+    public void setCategory(@NotNull Long category) {
+        this.category = category;
+    }
+
+    public @NotNull CategorySource getCategorySource() {
+        return categorySource;
+    }
+
+    public void setCategorySource(@NotNull CategorySource categorySource) {
+        this.categorySource = categorySource;
+    }
+
+    public int getUniqueWeight() {
+        return uniqueWeight;
+    }
+
+    public void setUniqueWeight(int uniqueWeight) {
+        this.uniqueWeight = uniqueWeight;
+    }
+
+    public @NotNull @Size(max = 20) String getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(@NotNull @Size(max = 20) String paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public @Size(max = 50) String getComment() {
+        return comment;
+    }
+
+    public void setComment(@Size(max = 50) String comment) {
+        this.comment = comment;
+    }
+
+    public Boolean getRegular() {
+        return isRegular;
+    }
+
+    public void setRegular(Boolean regular) {
+        isRegular = regular;
     }
 }
 

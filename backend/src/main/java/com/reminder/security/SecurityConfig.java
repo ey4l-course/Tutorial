@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin/**").hasRole("admin")
+                        .requestMatchers("/txn/**").hasRole("user")
                         .requestMatchers("/auth", "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )

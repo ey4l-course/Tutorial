@@ -1,10 +1,11 @@
 package com.reminder.Transactions.repository;
 
 import com.reminder.Transactions.model.Transaction;
-import com.reminder.Transactions.model.UserClassification;
 import com.reminder.Transactions.repository.mapper.TransactionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -26,6 +27,9 @@ public class TransactionRepository {
     @Value("${app.tables.userDefined}")
     private String USER_DEFINED;
 
+    @Value("${app.tables.globalDefined}")
+    private String GLOBAL_DEFINED;
+
     public void save (Transaction transaction){
             KeyHolder keyHolder = new GeneratedKeyHolder();
             String sql = "INSERT INTO " + TABLE + " (user_id, txn_time, description, amount, category_id, category_source, unique_weight, payment_method, comment)VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -44,11 +48,9 @@ public class TransactionRepository {
             }, keyHolder);
     }
 
-    public void addComment (int id, String comment){
+    public void addComment (Long id, String comment){
         String sql = String.format("UPDATE %s SET comment = ? WHERE id = ?", TABLE);
-        int updatedRows = jdbcTemplate.update(sql, comment, id);
-        if (updatedRows == 0)
-            throw new IllegalArgumentException(String.format("transaction with id %d not found", id));
+        jdbcTemplate.update(sql, comment, id);
     }
 
     public void changeCategory (int id, String category){
@@ -56,6 +58,16 @@ public class TransactionRepository {
         int updatedRows = jdbcTemplate.update(sql, category, id);
         if (updatedRows == 0)
             throw new IllegalArgumentException(String.format("transaction with id %d not found", id));
+    }
+
+    public Long getUserIdByTxnId (Long txnId) throws DataAccessException {
+        String sql = "SELECT user_id FROM " + TABLE + " WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, Long.class, txnId);
+    }
+
+    public Transaction getTxnById (Long id){
+        String sql = "SELECT * FROM " + TABLE + " WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, new TransactionMapper(), id);
     }
 
     public List<Transaction> getTxnPerCategory (String category){
@@ -69,6 +81,19 @@ public class TransactionRepository {
 
     public Long userDefinedCategory(Long userId, String description) {
         String sql = String.format("SELECT category FROM %s WHERE user_id = ? and description = ?", USER_DEFINED);
-        return jdbcTemplate.queryForObject(sql, Long.class, userId, description);
+        try {
+            return jdbcTemplate.queryForObject(sql, Long.class, userId, description);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    public Long globalDefinedCategory(String description) {
+        String sql = String.format("SELECT category FROM %s WHERE description = ?", GLOBAL_DEFINED); //TODO: add 'and is_default = true' after finalizing table
+        try {
+            return jdbcTemplate.queryForObject(sql, Long.class, description);
+        }catch (EmptyResultDataAccessException e){
+            return null;
+        }
     }
 }

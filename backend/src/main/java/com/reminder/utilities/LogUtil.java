@@ -74,6 +74,11 @@ public class LogUtil {
         return uuid;
     }
 
+    public void testLog (String msg){
+        Logger logger = LoggerFactory.getLogger("[TEST]");
+        logger.error(msg);
+    }
+
     private String toJson(Map<String, Object> payload) {
         try {
             return objectMapper.writeValueAsString(payload);

@@ -13,43 +13,38 @@ import java.util.List;
 @Service
 public class TransactionService {
     private final TransactionRepository repo;
-    private final Transaction txn;
     private final TxnUtility txnUtil;
 
     public TransactionService (TransactionRepository repo,
-                               Transaction txn,
                                TxnUtility txnUtil){
         this.repo = repo;
-        this.txn = txn;
         this.txnUtil = txnUtil;
     }
 
     public void newTransaction (List<Transaction> transactions, Long userId){
         for (Transaction txn : transactions)
         {
-            validateFields(this.txn);
+            txn.setAmount(txn.getAmount().setScale(2, RoundingMode.HALF_DOWN));
+            validateFields(txn);
             txn.setUserId(userId);
-            this.txn.setAmount(this.txn.getAmount().setScale(2, RoundingMode.HALF_DOWN));
             if (txn.getCategory() == null) { //Means user did not choose category
                 txnUtil.txnCategoryNotSet(txn);
             }else {
                 txn.setCategorySource(CategorySource.SPECIAL_CLASSIFICATION);
                 txn.setUniqueWeight(1);
             }
-            repo.save(this.txn);
+            repo.save(txn);
         }
     }
 
-    /*
-    TODO: Document: if new transaction category is 'null' -> user did not manually defined it;
-        if it has entry is user defined -> set it to current txn
-        else -> register under 'unclassified' (category 0)
-     */
-
-    public void addComment (int id, String comment){
+    public void addComment (Long id, String comment) throws IllegalAccessException {
+        if (comment == null || comment.trim().isEmpty())
+            throw new IllegalArgumentException("Comment is empty");
         if (comment.length() > 50)
             throw new IllegalArgumentException("Field comment too long (>50)");
-        repo.addComment(id, comment);
+        if (!txnUtil.validateAuthority(id))
+            throw new IllegalAccessException (String.format("Transaction #%s does not belong to user", id));
+        repo.addComment(id, comment.trim());
     }
 
     public void changeCategory (int id, String category){
@@ -74,8 +69,6 @@ public class TransactionService {
             throw new IllegalArgumentException("Amount cannot be empty or 0");
         if (transaction.getAmount().movePointRight(2).toBigInteger().toString().length() > 12)
             throw new IllegalArgumentException("Amount is out of range " + transaction.getAmount());
-        if (transaction.getComment().length() > 50)
-            throw new IllegalArgumentException("Field comment too long (>50)");
         if (transaction.getPaymentMethod() == null || transaction.getPaymentMethod().isEmpty())
             throw new IllegalArgumentException("Payment method cannot be null");
     }

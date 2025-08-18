@@ -42,4 +42,9 @@ public class TxnUtility {
             return true;
         return userDetails.getUserId().equals(repo.getUserIdByTxnId(txnId));
     }
+
+    public Long getUserId () {
+        CustomUserDetails currentAuthenticatedUser = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return currentAuthenticatedUser.getUserId();
+    }
 }

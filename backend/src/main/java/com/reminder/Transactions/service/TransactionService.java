@@ -1,6 +1,7 @@
 package com.reminder.Transactions.service;
 
 import com.reminder.Transactions.model.CategorySource;
+import com.reminder.Transactions.model.ClassUpdateDTO;
 import com.reminder.Transactions.model.Transaction;
 import com.reminder.Transactions.repository.TransactionRepository;
 import com.reminder.Transactions.utilities.TxnUtility;
@@ -47,10 +48,23 @@ public class TransactionService {
         repo.addComment(id, comment.trim());
     }
 
-    public void changeCategory (int id, String category){
-        if (category.length() > 10)
-            throw new IllegalArgumentException("Field category too long (>10)");
-        repo.changeCategory(id, category);
+    public void changeCategory (Long txnId, Long category, Boolean isPermanent){
+        if (!txnUtil.validateAuthority(txnId))
+            throw new SecurityException("Txn #" + txnId + " isn't owned by authenticated user");
+        if (isPermanent){
+            ClassUpdateDTO dto = new ClassUpdateDTO(txnId, null, null, category);
+            dto.setUserId(txnUtil.getUserId());
+            dto.setDescription(repo.getTxnDesc(txnId));
+            updateUserClassification(dto);
+        }
+        repo.changeCategory(txnId, category);
+    }
+
+    private void updateUserClassification(ClassUpdateDTO dto) {
+        if (repo.isClassifiedByUser(dto))
+            repo.updateClassification(dto);
+        else
+            repo.firstClassification(dto);
     }
 
     public List<Transaction> getTxnPerCategory (String category){

@@ -26,10 +26,11 @@ public class TransactionController {
     @Autowired
     LogUtil logUtil;
 
+
     @PostMapping ("/new")
     public ResponseEntity<?> newTransaction(@RequestBody List<Transaction> transactions,
                                             HttpServletRequest request) {
-        RequestContextDTO contextDTO = (RequestContextDTO) contextHandler(request);
+        RequestContextDTO contextDTO = contextHandler(request);
         try {
             CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
             Long userId = userDetails.getUserId();
@@ -44,7 +45,7 @@ public class TransactionController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please ensure parameters. log ID: " + uuid); //UI should eliminate such instances so likely cause by misuse or threat actor
         } catch (Exception e) {
             String uuid = logUtil.error(e);
-            contextDTO.setOutcome("[REJECTED] status 500, " + e.getMessage());
+            contextDTO.setOutcome("[FAILED] status 500, " + uuid);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
@@ -53,7 +54,7 @@ public class TransactionController {
     public ResponseEntity<?> addComment(@PathVariable Long id,
                                         @RequestBody String comment,
                                         HttpServletRequest request) {
-        RequestContextDTO contextDTO = (RequestContextDTO) contextHandler(request);
+        RequestContextDTO contextDTO = contextHandler(request);
         try {
             transactionService.addComment(id, comment);
             contextDTO.setOutcome("[SUCCESS] status 200, comment added to transaction #" + id);
@@ -72,21 +73,36 @@ public class TransactionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         } catch (Exception e) {
             String uuid = logUtil.error(e);
+            contextDTO.setOutcome("[FAILED] status 500, " + uuid);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
 
     @PatchMapping("/{id}/category")
-    public ResponseEntity<?> changeCategory(@PathVariable int id,
-                                            @RequestBody String category) {
+    public ResponseEntity<?> changeCategory(@PathVariable Long id,
+                                            @RequestBody Long category,
+                                            @RequestBody Boolean isPermanent,
+                                            HttpServletRequest request) {
+        if (category == null)
+            throw new IllegalArgumentException("Category is null or empty");
+        if (isPermanent == null)
+            throw new SecurityException("isPermanent field is null");
+        RequestContextDTO contextDTO = contextHandler(request);
         try {
-            transactionService.changeCategory(id, category);
+            transactionService.changeCategory(id, category, isPermanent);
+            contextDTO.setOutcome("[SUCCESS] status 200, transaction category changed by user, permanent = " + isPermanent);
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            String uuid = logUtil.infoLog("User", e.getMessage());
+            String uuid = logUtil.infoLog(contextDTO.getUserName(), e.getMessage());
+            contextDTO.setOutcome("[REJECTED] status 400, " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please ensure parameters. log ID: " + uuid); //UI should eliminate such instances so likely cause by misuse or threat actor
+        }catch (SecurityException e){
+            String uuid = logUtil.securityLog(e.getMessage());
+            contextDTO.setOutcome("[REJECTED] status 403, " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Log id: " + uuid);
         } catch (Exception e) {
             String uuid = logUtil.error(e);
+            contextDTO.setOutcome("[FAILED] status 500, " + uuid);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }

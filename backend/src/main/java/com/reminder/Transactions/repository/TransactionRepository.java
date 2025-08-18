@@ -56,7 +56,7 @@ public class TransactionRepository {
     }
 
     public void changeCategory (Long id, Long category){
-        String sql = String.format("UPDATE %s SET category = ?, category_source = ?, unique_weight = ?, WHERE id = ?", TABLE);
+        String sql = String.format("UPDATE %s SET category = ?, category_source = ?, unique_weight = ? WHERE id = ?", TABLE);
         int updatedRows = jdbcTemplate.update(sql, category, CategorySource.SPECIAL_CLASSIFICATION, 1, id);
         if (updatedRows == 0)
             throw new IllegalArgumentException(String.format("transaction with id %d not found", id));
@@ -100,7 +100,7 @@ public class TransactionRepository {
     }
 
     public boolean isClassifiedByUser(ClassUpdateDTO dto) {
-        String sql = "SELECT COUNT (*) FROM " + USER_DEFINED + " WHERE user_id = ?, and description = ?";
+        String sql = "SELECT COUNT (*) FROM " + USER_DEFINED + " WHERE user_id = ? and description = ?";
         Long count = jdbcTemplate.queryForObject(sql, Long.class, dto.getUserId(), dto.getDescription());
         if (count > 1)
             throw new IllegalStateException("Too many classifications for description " + dto.getDescription());

@@ -1,5 +1,7 @@
 package com.reminder.Transactions.repository;
 
+import com.reminder.Transactions.model.CategorySource;
+import com.reminder.Transactions.model.ClassUpdateDTO;
 import com.reminder.Transactions.model.Transaction;
 import com.reminder.Transactions.repository.mapper.TransactionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,9 +55,9 @@ public class TransactionRepository {
         jdbcTemplate.update(sql, comment, id);
     }
 
-    public void changeCategory (int id, String category){
-        String sql = String.format("UPDATE %s SET category = ? WHERE id = ?", TABLE);
-        int updatedRows = jdbcTemplate.update(sql, category, id);
+    public void changeCategory (Long id, Long category){
+        String sql = String.format("UPDATE %s SET category = ?, category_source = ?, unique_weight = ?, WHERE id = ?", TABLE);
+        int updatedRows = jdbcTemplate.update(sql, category, CategorySource.SPECIAL_CLASSIFICATION, 1, id);
         if (updatedRows == 0)
             throw new IllegalArgumentException(String.format("transaction with id %d not found", id));
     }
@@ -95,5 +97,36 @@ public class TransactionRepository {
         }catch (EmptyResultDataAccessException e){
             return null;
         }
+    }
+
+    public boolean isClassifiedByUser(ClassUpdateDTO dto) {
+        String sql = "SELECT COUNT (*) FROM " + USER_DEFINED + " WHERE user_id = ?, and description = ?";
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, dto.getUserId(), dto.getDescription());
+        if (count > 1)
+            throw new IllegalStateException("Too many classifications for description " + dto.getDescription());
+        return count == 1;
+    }
+
+    public String getTxnDesc(Long txnId) {
+        String sql = "SELECT description FROM " + TABLE + " WHERE id = ?";
+        return jdbcTemplate.queryForObject(sql, String.class, txnId);
+    }
+
+    public void updateClassification(ClassUpdateDTO dto) {
+        String sql = "UPDATE " + USER_DEFINED + " SET category = ? WHERE user_id = ? and description = ?";
+        jdbcTemplate.update(sql, dto.getCategory(), dto.getUserId(), dto.getDescription());
+    }
+
+    public void firstClassification(ClassUpdateDTO dto) {
+        KeyHolder key = new GeneratedKeyHolder();
+        String sql = "INSERT INTO " + USER_DEFINED + " (user_id, description, category, is_regular) VALUES (?, ?, ?, ?)";
+        jdbcTemplate.update(con -> {
+            PreparedStatement ps = con.prepareStatement(sql, new  String[] {"id"});
+            ps.setLong(1, dto.getUserId());
+            ps.setString(2, dto.getDescription());
+            ps.setLong(3, dto.getCategory());
+            ps.setBoolean(4, false);    //Possible future enhancement
+            return ps;
+        }, key);
     }
 }

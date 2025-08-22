@@ -56,8 +56,8 @@ public class TransactionRepository {
     }
 
     public void changeCategory (Long id, Long category){
-        String sql = String.format("UPDATE %s SET category = ?, category_source = ?, unique_weight = ? WHERE id = ?", TABLE);
-        int updatedRows = jdbcTemplate.update(sql, category, CategorySource.SPECIAL_CLASSIFICATION, 1, id);
+        String sql = String.format("UPDATE %s SET category_id = ?, category_source = ?, unique_weight = ? WHERE id = ?", TABLE);
+        int updatedRows = jdbcTemplate.update(sql, category, CategorySource.SPECIAL_CLASSIFICATION.toString(), 1, id);
         if (updatedRows == 0)
             throw new IllegalArgumentException(String.format("transaction with id %d not found", id));
     }
@@ -72,8 +72,8 @@ public class TransactionRepository {
         return jdbcTemplate.queryForObject(sql, new TransactionMapper(), id);
     }
 
-    public List<Transaction> getTxnPerCategory (String category){
-        final String sql = "SELECT * FROM " + TABLE + " WHERE category = ?";
+    public List<Transaction> getTxnPerCategory (Long category){
+        final String sql = "SELECT * FROM " + TABLE + " WHERE category_id = ?";
         return jdbcTemplate.query(sql, new TransactionMapper(), category);
     }
     public List<Transaction> getAllTransactions () {
@@ -82,7 +82,7 @@ public class TransactionRepository {
     }
 
     public Long userDefinedCategory(Long userId, String description) {
-        String sql = String.format("SELECT category FROM %s WHERE user_id = ? and description = ?", USER_DEFINED);
+        String sql = String.format("SELECT category_id FROM %s WHERE user_id = ? and description = ?", USER_DEFINED);
         try {
             return jdbcTemplate.queryForObject(sql, Long.class, userId, description);
         } catch (EmptyResultDataAccessException e) {
@@ -113,20 +113,33 @@ public class TransactionRepository {
     }
 
     public void updateClassification(ClassUpdateDTO dto) {
-        String sql = "UPDATE " + USER_DEFINED + " SET category = ? WHERE user_id = ? and description = ?";
+        String sql = "UPDATE " + USER_DEFINED + " SET category_id = ? WHERE user_id = ? and description = ?";
         jdbcTemplate.update(sql, dto.getCategory(), dto.getUserId(), dto.getDescription());
     }
 
     public void firstClassification(ClassUpdateDTO dto) {
         KeyHolder key = new GeneratedKeyHolder();
-        String sql = "INSERT INTO " + USER_DEFINED + " (user_id, description, category, is_regular) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO " + USER_DEFINED + " (user_id, description, category_id, regular) VALUES (?, ?, ?, ?)";
         jdbcTemplate.update(con -> {
-            PreparedStatement ps = con.prepareStatement(sql, new  String[] {"id"});
+            PreparedStatement ps = con.prepareStatement(sql, new String[] {"id"});
             ps.setLong(1, dto.getUserId());
             ps.setString(2, dto.getDescription());
             ps.setLong(3, dto.getCategory());
             ps.setBoolean(4, false);    //Possible future enhancement
             return ps;
         }, key);
+    }
+
+    public int testCountEntries (){
+        try {
+            return jdbcTemplate.queryForObject("SELECT COUNT (*) FROM " + USER_DEFINED, int.class);
+        }catch (NullPointerException e){
+            return 0;
+        }
+    }
+
+    public List<Transaction> getUserTxnPerCategory(Long category, Long wantedUser) {
+        String  sql = "SELECT * FROM " + TABLE + " WHERE category_id = ? AND user_id = ?";
+        return jdbcTemplate.query(sql, new TransactionMapper(), category, wantedUser);
     }
 }

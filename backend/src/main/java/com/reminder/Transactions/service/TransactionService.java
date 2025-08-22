@@ -1,8 +1,6 @@
 package com.reminder.Transactions.service;
 
-import com.reminder.Transactions.model.CategorySource;
-import com.reminder.Transactions.model.ClassUpdateDTO;
-import com.reminder.Transactions.model.Transaction;
+import com.reminder.Transactions.model.*;
 import com.reminder.Transactions.repository.TransactionRepository;
 import com.reminder.Transactions.utilities.TxnUtility;
 import org.springframework.stereotype.Service;
@@ -48,16 +46,16 @@ public class TransactionService {
         repo.addComment(id, comment.trim());
     }
 
-    public void changeCategory (Long txnId, Long category, Boolean isPermanent){
+    public void changeCategory (Long txnId, CatChangeDto catChangeDto){
         if (!txnUtil.validateAuthority(txnId))
             throw new SecurityException("Txn #" + txnId + " isn't owned by authenticated user");
-        if (isPermanent){
-            ClassUpdateDTO dto = new ClassUpdateDTO(txnId, null, null, category);
+        if (catChangeDto.getPermanent()){
+            ClassUpdateDTO dto = new ClassUpdateDTO(txnId, null, null, catChangeDto.getCategory());
             dto.setUserId(txnUtil.getUserId());
             dto.setDescription(repo.getTxnDesc(txnId));
             updateUserClassification(dto);
         }
-        repo.changeCategory(txnId, category);
+        repo.changeCategory(txnId, catChangeDto.getCategory());
     }
 
     private void updateUserClassification(ClassUpdateDTO dto) {
@@ -67,9 +65,16 @@ public class TransactionService {
             repo.firstClassification(dto);
     }
 
-    public List<Transaction> getTxnPerCategory (String category){
-        category = inputLowerCaser(category);
-        return repo.getTxnPerCategory(category);
+    public List<Transaction> getTxnPerCategory (GetTransactions dto) throws IllegalAccessException{
+        if ("admin".equals(dto.getUserRole()))
+            if (dto.getWantedUser() == null) {
+                return repo.getTxnPerCategory(dto.getCategory());
+            }else {
+                return repo.getUserTxnPerCategory(dto.getCategory(), dto.getWantedUser());
+            }
+        if (dto.getWantedUser() != null)
+            throw new IllegalAccessException("Unauthorized query for other user transactions");
+        return repo.getUserTxnPerCategory(dto.getCategory(), dto.getUserId());
     }
 
     public List<Transaction> getAllTransactions(){

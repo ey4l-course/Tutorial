@@ -77,8 +77,16 @@ public class TransactionService {
         return repo.getUserTxnPerCategory(dto.getCategory(), dto.getUserId());
     }
 
-    public List<Transaction> getAllTransactions(){
-        return repo.getAllTransactions();
+    public List<Transaction> getAllTransactions(GetTransactions dto) throws IllegalAccessException{
+        if ("admin".equals(dto.getUserRole()))
+            if (dto.getWantedUser() == null) {
+                return repo.getAllTransactions();
+            } else {
+                return repo.getTxnByUserId(dto.getWantedUser());
+            }
+        if (dto.getWantedUser() != null)
+            throw new IllegalAccessException("Unauthorized query for other user transactions");
+        return repo.getTxnByUserId(dto.getUserId());
     }
 
     private void validateFields (Transaction transaction){

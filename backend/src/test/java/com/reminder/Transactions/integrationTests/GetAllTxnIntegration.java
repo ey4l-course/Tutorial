@@ -11,31 +11,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest (webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
-public class GetTxnIntegration {
+public class GetAllTxnIntegration {
     @Autowired
     JwtUtil jwt;
     @Autowired
-    JdbcTemplate jdbc;
+    MockMvc mockMvc;
     @Autowired
     ObjectMapper mapper;
-    @Autowired
-    MockMvc mockMvc;
     @Autowired
     TransactionRepository repo;
 
@@ -47,66 +40,67 @@ public class GetTxnIntegration {
     }
 
     @Test
-    void HappyPathUser() throws Exception {
+    void happyPathUser () throws Exception{
         TokensDTO dto = authenticateAs("benc", "user");
 
-        MvcResult result = mockMvc.perform(get("/txn/1")
+        MvcResult result = mockMvc.perform(get("/txn")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", dto.getAccessToken())
+                        .header("authorization", dto.getAccessToken())
                         .header("Refresh", dto.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String responseJson = result.getResponse().getContentAsString();
-        List<Transaction> responseList = mapper.readValue(responseJson, new TypeReference<List<Transaction>>() {});
-        for (Transaction txn : responseList){
-            assertEquals(2L, txn.getUserId());
-        }
+        String JSON = result.getResponse().getContentAsString();
+        List<Transaction> responseList = mapper.readValue(JSON, new TypeReference<List<Transaction>>() {});
+        List<Transaction> dataBaseList = repo.getTxnByUserId(1L);
+
+        assertEquals(dataBaseList.size(), responseList.size());
     }
 
     @Test
-    void userUnauthorized () throws Exception {
+    void userViolation () throws Exception{
         TokensDTO dto = authenticateAs("benc", "user");
 
-        mockMvc.perform(get("/txn/1?user=1")
+        mockMvc.perform(get("/txn?user=1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", dto.getAccessToken())
+                        .header("authorization", dto.getAccessToken())
                         .header("Refresh", dto.getRefreshToken()))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$", containsString("You are unauthorized to perform this operation")));
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void happyPathAdminPerUser () throws Exception {
+    void adminPerUser () throws Exception{
         TokensDTO dto = authenticateAs("aliceg", "admin");
 
-        MvcResult result = mockMvc.perform(get("/txn/1?user=1")
+        MvcResult result = mockMvc.perform(get("/txn?user=1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", dto.getAccessToken())
+                        .header("authorization", dto.getAccessToken())
                         .header("Refresh", dto.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andReturn();
-        String responseJson = result.getResponse().getContentAsString();
-        List<Transaction> responseList = mapper.readValue(responseJson, new TypeReference<List<Transaction>>() {});
 
-        List<Transaction> DbResult = repo.getUserTxnPerCategory(1L, 1L);
-        assertEquals(DbResult.size(), responseList.size());
+        String JSON = result.getResponse().getContentAsString();
+        List<Transaction> responseList = mapper.readValue(JSON, new TypeReference<List<Transaction>>() {});
+        List<Transaction> dataBaseList = repo.getTxnByUserId(1L);
+
+        assertEquals(dataBaseList.size(), responseList.size());
     }
 
     @Test
-    void happyPathAdminAllTxn () throws Exception {
+    void adminAll () throws Exception{
         TokensDTO dto = authenticateAs("aliceg", "admin");
 
-        MvcResult result = mockMvc.perform(get("/txn/1")
+        MvcResult result = mockMvc.perform(get("/txn")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", dto.getAccessToken())
+                        .header("authorization", dto.getAccessToken())
                         .header("Refresh", dto.getRefreshToken()))
                 .andExpect(status().isOk())
                 .andReturn();
-        String responseJson = result.getResponse().getContentAsString();
-        List<Transaction> responseList = mapper.readValue(responseJson, new TypeReference<List<Transaction>>() {});
 
-        List<Transaction> DbResult = repo.getTxnPerCategory(1L);
-        assertEquals(DbResult.size(), responseList.size());
+        String JSON = result.getResponse().getContentAsString();
+        List<Transaction> responseList = mapper.readValue(JSON, new TypeReference<List<Transaction>>() {});
+        List<Transaction> dataBaseList = repo.getAllTransactions();
+
+        assertEquals(dataBaseList.size(), responseList.size());
     }
 }

@@ -78,6 +78,7 @@ public class TransactionService {
     }
 
     public List<Transaction> getAllTransactions(GetTransactions dto) throws IllegalAccessException{
+        System.out.println(dto.getUserRole());
         if ("admin".equals(dto.getUserRole()))
             if (dto.getWantedUser() == null) {
                 return repo.getAllTransactions();

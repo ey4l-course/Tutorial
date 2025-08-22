@@ -1,5 +1,7 @@
 package com.reminder.Transactions.controller;
 
+import com.reminder.Transactions.model.CatChangeDto;
+import com.reminder.Transactions.model.GetTransactions;
 import com.reminder.Transactions.model.Transaction;
 import com.reminder.Transactions.service.TransactionService;
 import com.reminder.Users.model.RequestContextDTO;
@@ -80,17 +82,16 @@ public class TransactionController {
 
     @PatchMapping("/{id}/category")
     public ResponseEntity<?> changeCategory(@PathVariable Long id,
-                                            @RequestBody Long category,
-                                            @RequestBody Boolean isPermanent,
+                                            @RequestBody CatChangeDto dto,
                                             HttpServletRequest request) {
-        if (category == null)
+        if (dto.getCategory() == null)
             throw new IllegalArgumentException("Category is null or empty");
-        if (isPermanent == null)
+        if (dto.getPermanent() == null)
             throw new SecurityException("isPermanent field is null");
         RequestContextDTO contextDTO = contextHandler(request);
         try {
-            transactionService.changeCategory(id, category, isPermanent);
-            contextDTO.setOutcome("[SUCCESS] status 200, transaction category changed by user, permanent = " + isPermanent);
+            transactionService.changeCategory(id, dto);
+            contextDTO.setOutcome("[SUCCESS] status 200, transaction category changed by user, permanent = " + dto.getPermanent());
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             String uuid = logUtil.infoLog(contextDTO.getUserName(), e.getMessage());
@@ -108,11 +109,26 @@ public class TransactionController {
     }
 
     @GetMapping("/{category}")
-    public ResponseEntity<?> GetTxnPerCategory(@PathVariable String category) {
+    public ResponseEntity<?> GetTxnPerCategory(@PathVariable Long category,
+                                               @RequestParam (name = "user", required = false) Long wantedUserId,
+                                               HttpServletRequest request) {
+        RequestContextDTO contextDTO = contextHandler(request);
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        GetTransactions dto = new GetTransactions(userDetails.getUserId(),
+                userDetails.getRole(),
+                category,
+                wantedUserId);
         try {
-            return ResponseEntity.status(HttpStatus.OK).body(transactionService.getTxnPerCategory(category));
+            List<Transaction> result = transactionService.getTxnPerCategory(dto);
+            contextDTO.setOutcome("[SUCCESS] status 200");
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        }catch (IllegalAccessException e){
+            String uuid = logUtil.securityLog(e.getMessage());
+            contextDTO.setOutcome("[REJECTED] status 401, " + e.getMessage() + ", log ID: " + uuid);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are unauthorized to perform this operation. log ID: " + uuid);
         } catch (Exception e) {
             String uuid = logUtil.error(e);
+            contextDTO.setOutcome("[FAILED] status 500, " + uuid);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }

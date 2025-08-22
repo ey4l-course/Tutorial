@@ -134,9 +134,19 @@ public class TransactionController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllTransactions() {
+    public ResponseEntity<?> getAllTransactions(@RequestParam (name = "user", required = false) Long wantedUser,
+                                                HttpServletRequest request) {
+        RequestContextDTO contextDTO = contextHandler(request);
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        GetTransactions dto = new GetTransactions(userDetails.getUserId(), userDetails.getRole(), null, wantedUser);
         try {
-            return ResponseEntity.status(HttpStatus.OK).body(transactionService.getAllTransactions());
+            List<Transaction> result = transactionService.getAllTransactions(dto);
+            contextDTO.setOutcome("[SUCCESS] status 200");
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        }catch (IllegalAccessException e){
+            String uuid = logUtil.securityLog(e.getMessage());
+            contextDTO.setOutcome("[REJECTED] status 401, " + e.getMessage() + ", log ID: " + uuid);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("You are unauthorized to perform this operation. log ID: " + uuid);
         } catch (Exception e) {
             String uuid = logUtil.error(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);

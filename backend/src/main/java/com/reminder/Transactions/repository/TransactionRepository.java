@@ -142,4 +142,9 @@ public class TransactionRepository {
         String  sql = "SELECT * FROM " + TABLE + " WHERE category_id = ? AND user_id = ?";
         return jdbcTemplate.query(sql, new TransactionMapper(), category, wantedUser);
     }
+
+    public List<Transaction> getTxnByUserId(Long wantedUser) {
+        String sql = "SELECT * FROM " + TABLE + " WHERE user_id = ?";
+        return jdbcTemplate.query(sql, new TransactionMapper(), wantedUser);
+    }
 }

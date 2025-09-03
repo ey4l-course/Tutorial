@@ -34,9 +34,10 @@ public class AddCommentIntegrationTest {
             db.execute("TRUNCATE TABLE transactions_table");
             db.execute("TRUNCATE TABLE user_transaction_classification");
             db.execute("TRUNCATE TABLE global_transaction_classification");
-        db.execute("INSERT INTO transactions_table (user_id, txn_time, description, amount, category_id, payment_method) VALUES " +
-                "(1, '" + time + "', 'Rami Levi', 100, 2, 'credit')," +
-                "(2, '" + time + "', 'Supersal', 200, 2, 'credit')");
+            db.execute("ALTER TABLE transactions_table ALTER COLUMN id RESTART WITH 1;");
+            db.execute("INSERT INTO transactions_table (user_id, txn_time, description, amount, category_id, payment_method) VALUES " +
+                    "(1, '" + time + "', 'Rami Levi', 100, 2, 'credit')," +
+                    "(2, '" + time + "', 'Supersal', 200, 2, 'credit')");
     }
 
     @Test

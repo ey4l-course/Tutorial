@@ -20,6 +20,7 @@ It will be built in stages:
 ### Admin Panel – User Management
 
 - ✅ View all users
+- 
 - ✅ Search user profile (by given name, surname, service level)
 - ✅ View user by ID
 - ✅ Edit user profile

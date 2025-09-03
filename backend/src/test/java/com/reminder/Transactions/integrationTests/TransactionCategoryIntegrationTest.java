@@ -43,6 +43,8 @@ public class TransactionCategoryIntegrationTest {
         );
     }
 
+
+
     @Test
     void nonPermanentTxn () throws Exception {
         TokensDTO tokens = authenticateAs("benc", "user");
@@ -51,14 +53,14 @@ public class TransactionCategoryIntegrationTest {
                 "isPermanent", false
         );
 
-        mockMvc.perform(patch("/txn/1/category")
+        mockMvc.perform(patch("/txn/2/category")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", tokens.getAccessToken())
                 .header("Refresh", tokens.getRefreshToken())
                 .content(mapper.writeValueAsString(dto)))
                 .andExpect(status().isOk());
 
-        Transaction tstTxn = repo.getTxnById(1L);
+        Transaction tstTxn = repo.getTxnById(2L);
         assertEquals(3L, tstTxn.getCategory());
         assertEquals(null, repo.userDefinedCategory(2L, "Shufersal"));
     }
@@ -70,6 +72,7 @@ public class TransactionCategoryIntegrationTest {
                 "category", 2,  // fuel
                 "isPermanent", true
         );
+        int countEntriesB4 = repo.testCountEntries();
 
         mockMvc.perform(patch("/txn/2/category")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -81,7 +84,7 @@ public class TransactionCategoryIntegrationTest {
         Transaction tstTxn = repo.getTxnById(2L);
         assertEquals(2L, tstTxn.getCategory());
         assertEquals(2L , repo.userDefinedCategory(2L, "PazGas"));
-        assertEquals(1, repo.testCountEntries());
+        assertEquals(countEntriesB4 + 1, repo.testCountEntries());
     }
 
     @Test
@@ -91,18 +94,19 @@ public class TransactionCategoryIntegrationTest {
                 "category", 1,  // fuel
                 "isPermanent", true
         );
+        int countEntriesB4 = repo.testCountEntries();
 
-        mockMvc.perform(patch("/txn/1/category")
+        mockMvc.perform(patch("/txn/2/category")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(dto))
                         .header("Authorization", tokens.getAccessToken())
                         .header("Refresh", tokens.getRefreshToken()))
                 .andExpect(status().isOk());
 
-        Transaction tstTxn = repo.getTxnById(1L);
+        Transaction tstTxn = repo.getTxnById(2L);
         assertEquals(1L, tstTxn.getCategory());
-        assertEquals(1L , repo.userDefinedCategory(2L, "Shufersal"));
-        assertEquals(2, repo.testCountEntries());
+        assertEquals(1L , repo.userDefinedCategory(2L, "Rami Levy"));
+        assertEquals(countEntriesB4 +1 , repo.testCountEntries());
     }
 
     @Test

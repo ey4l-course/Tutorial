@@ -107,6 +107,8 @@ public class AdminController {
                                               HttpServletRequest request){
         RequestContextDTO contextDTO = contextHandler(request);
         try {
+            if (userProfile == null)
+                throw new IllegalArgumentException("No profile was provided");
             Long userId = userProfile.getId();
             usersService.updateUserProfile(userProfile, userId);
             contextDTO.setOutcome("[SUCCESS] status: 202, User " + userId + "successfully updated");

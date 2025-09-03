@@ -83,7 +83,7 @@ public class AdminPanelIntegrationTest {
         String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
 
         //Search by given name
-        mockMvc.perform(get("/admin/user?given-name=Ben")
+        mockMvc.perform(get("/admin/profile?given-name=Ben")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + access)
                         .header("Refresh", "Bearer " + refresh))
@@ -91,7 +91,7 @@ public class AdminPanelIntegrationTest {
                 .andExpect(jsonPath("[0]").isNotEmpty());
 
         //Search by surname
-        mockMvc.perform(get("/admin/user?surname=Katz")
+        mockMvc.perform(get("/admin/profile?surname=Katz")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + access)
                         .header("Refresh", "Bearer " + refresh))
@@ -101,7 +101,7 @@ public class AdminPanelIntegrationTest {
         //Search By service level
 
         //Search by surname
-        mockMvc.perform(get("/admin/user?service-level=1")
+        mockMvc.perform(get("/admin/profile?service-level=1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + access)
                         .header("Refresh", "Bearer " + refresh))
@@ -114,7 +114,7 @@ public class AdminPanelIntegrationTest {
         String access = jwtUtil.generateJwtToken("aliceg", "admin");
         String refresh = jwtUtil.generateRefreshToken("aliceg", "admin");
 
-        mockMvc.perform(get("/admin/user?saervice-level=1")
+        mockMvc.perform(get("/admin/profile?saervice-level=1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Bearer " + access)
                         .header("Refresh", "Bearer " + refresh))
@@ -340,7 +340,7 @@ public class AdminPanelIntegrationTest {
                         .header("Authorization", "Bearer " + access)
                         .header("Refresh", "Bearer " + refresh))
                 .andExpect(status().isOk());
-        mockMvc.perform(get("/admin/user?given-name=Ben")
+        mockMvc.perform(get("/admin/profile?given-name=Ben")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody)
                         .header("Authorization", "Bearer " + access)

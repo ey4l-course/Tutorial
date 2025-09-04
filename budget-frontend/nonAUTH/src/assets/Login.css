@@ -1,4 +1,4 @@
-/* App.css */
+/* Login.css */
 
 body {
   margin: 0;
@@ -60,6 +60,7 @@ input:focus {
 }
 
 button {
+  margin: 0.5rem;
   padding: 0.8rem;
   font-size: 1rem;
   background: #4a90e2;
@@ -72,6 +73,10 @@ button {
 
 button:hover {
   background: #357ab7;
+}
+
+button:disabled{
+  color: #999;
 }
 
 footer {

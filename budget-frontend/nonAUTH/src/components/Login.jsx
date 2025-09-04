@@ -1,6 +1,7 @@
 import React from "react";
 import { useState } from "react";
-import "./App.css"
+import "../assets/Login.css"
+import { Link } from "react-router-dom";
 
 const testUser = {"userName": "test_user", "hashedPassword": "Hashed V@lidP@ssw0rd"}
 
@@ -32,7 +33,7 @@ const App = () => {
           <input type="password" name="Password" onChange={e => setPassword(e.target.value)}/>
         </div>
         <button type="submit">Login</button>
-        <footer>Not register? <span>Register new account</span></footer>
+        <footer>Not register? <span><Link to='/register'>Register new account</Link></span></footer>
         
       </form>
     </div>

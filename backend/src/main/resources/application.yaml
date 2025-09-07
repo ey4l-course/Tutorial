@@ -52,4 +52,4 @@ jwt:
     prefix: "Bearer "
   excludedPaths:
     - "/h2-console/**"
-    - "/auth"
+    - "/auth/**"

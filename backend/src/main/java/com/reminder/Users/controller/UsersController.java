@@ -62,8 +62,7 @@ public class UsersController {
         }
     }
 
-    @PreAuthorize("hasRole('user') or hasRole('admin') or hasRole(app)")
-    @PostMapping("/auth/login")
+    @PostMapping("/login")
     public ResponseEntity<?> login (@RequestBody UserLogin user) {
         try {
             TokensDTO tokens = usersService.loginService (user);

@@ -39,7 +39,7 @@ public class UsersRepository {
             jdbcTemplate.update(con -> {
                 PreparedStatement ps = con.prepareStatement(sql, new String[]{"id"});
                 ps.setString(1, user.getUserName());
-                ps.setString(2, user.getHashedPassword());
+                ps.setString(2, user.getPassword());
                 ps.setString(3, user.getRole());
                 return ps;
             }, keyHolder);
@@ -164,7 +164,7 @@ public class UsersRepository {
             jdbcTemplate.update(con -> {
                 PreparedStatement ps = con.prepareStatement(sql, new String[]{"id"});
                 ps.setString(1, user.getUserName());
-                ps.setString(2, user.getHashedPassword());
+                ps.setString(2, user.getPassword());
                 ps.setString(3, user.getRole());
                 ps.setBoolean(4, user.isActive());
                 return ps;

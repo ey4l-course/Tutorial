@@ -38,8 +38,8 @@ public class UsersService {
     final private Pattern validPassword = Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[-!@#$%^&*()_./]).{8,}$");
 
     public TokensDTO newUser(UserLogin userCredentials) {
-        validateCredentials(userCredentials.getUserName(), userCredentials.getHashedPassword());
-        userCredentials.setHashedPassword(passwordHasher(userCredentials.getHashedPassword()));
+        validateCredentials(userCredentials.getUserName(), userCredentials.getPassword());
+        userCredentials.setPassword(passwordHasher(userCredentials.getPassword()));
         userCredentials.setRole("user");
         usersRepository.save(userCredentials);
         TokensDTO response = new TokensDTO(
@@ -64,7 +64,7 @@ public class UsersService {
         UserLogin savedUser = usersRepository.getUserByUserName(user.getUserName());
         if (!savedUser.isActive())
             throw new InvalidParameterException("");
-        if (!encoder.matches(user.getHashedPassword(), savedUser.getHashedPassword()))
+        if (!encoder.matches(user.getPassword(), savedUser.getPassword()))
             throw new AccessDeniedException("Invalid password");
         return new TokensDTO(jwtUtil.generateJwtToken(savedUser.getUserName(), savedUser.getRole()),
                 jwtUtil.generateRefreshToken(savedUser.getUserName(), savedUser.getRole()));
@@ -88,13 +88,9 @@ public class UsersService {
     }
 
     public void deleteAccount(DeleteAccountDTO dto) {
-        String storedHash = usersRepository.getUserByUserName(dto.getUserName()).getHashedPassword();
-        //For test
-        if (!dto.getPassword().equals(storedHash))
+        String storedHash = usersRepository.getUserByUserName(dto.getUserName()).getPassword();
+        if (!encoder.matches(dto.getPassword(),storedHash))
             throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
-        //For prod: comment out when testing
-//        if (!encoder.matches(dto.getPassword(),storedHash))
-//            throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
         if (usersRepository.deleteAccount(dto.getId()) == 0)
             throw new  IllegalArgumentException("User not found");
     }
@@ -118,7 +114,7 @@ public class UsersService {
     private void validateUserCreationByAdmin(UserLogin user){
         if (user.getUserName() == null || user.getUserName().isEmpty() || !validUserName.matcher(user.getUserName()).matches())
             throw new IllegalArgumentException("User name must contain letters, digits or ._-$^~");
-        if (user.getHashedPassword() == null || user.getHashedPassword().isEmpty() || !validPassword.matcher(user.getHashedPassword()).matches())
+        if (user.getPassword() == null || user.getPassword().isEmpty() || !validPassword.matcher(user.getPassword()).matches())
             throw new IllegalArgumentException("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)");
         if (user.getRole() == null || user.getRole().isEmpty())
             throw new IllegalArgumentException("No role was defined.");
@@ -252,7 +248,7 @@ public class UsersService {
     public Long newSpecialUser(UserLogin user) {
         try {
             validateUserCreationByAdmin(user);
-            user.setHashedPassword(passwordHasher(user.getHashedPassword()));
+            user.setPassword(passwordHasher(user.getPassword()));
             return usersRepository.saveSpecial(user);
         }catch (DataAccessException e){
             throw new IllegalArgumentException("User-name already taken");

@@ -1,26 +1,53 @@
 ## PRODUCTION ##
 server:
   port: 8080
-
+  address: 127.0.0.1
 spring:
   datasource:
-    url: jdbc:mariadb://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:budget}?useUnicode=true&characterEncoding=utf8&sessionVariables=sql_mode='STRICT_ALL_TABLES'
+    url: jdbc:mariadb://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:budget}?useUnicode=true&characterEncoding=utf8&sessionVariables=sql_mode=STRICT_ALL_TABLES
     username: ${DB_USER}
-    password: ${DB_PASS}
+    password: ${DB_PASSWORD}
     driver-class-name: org.mariadb.jdbc.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    properties:
-      hibernate.dialect: org.hibernate.dialect.MariaDBDialect
-      hibernate.format_sql: true
-    open-in-view: false
-  sql:
-    init:
-      mode: never
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
       idle-timeout: 300000
       connection-timeout: 30000
       max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.dialect: org.hibernate.dialect.MariaDBDialect
+      hibernate.format_sql: false
+    open-in-view: false
+    show-sql: false
+  sql:
+    init:
+      mode: never
+
+management:
+  endpoints:
+    enabled-by-default: false
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %-5level %logger{36} - %msg%n"
+
+jwt:
+  secret: ${JWT_SECRET}
+  access:
+    expiration: 900000 # 15 minutes
+  refresh:
+    expiration: 7200000 # 2 hours
+  header:
+    accessHeader: Authorization
+    refreshHeader: Refresh
+    prefix: "Bearer "
+  excludedPaths:
+    - "/auth/**"

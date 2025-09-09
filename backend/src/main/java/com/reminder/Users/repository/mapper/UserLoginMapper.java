@@ -13,7 +13,7 @@ public class UserLoginMapper implements RowMapper {
         userLogin.setId(rs.getLong("id"));
         userLogin.setUserId(rs.getLong("user_id"));
         userLogin.setUserName(rs.getString("user_name"));
-        userLogin.setHashedPassword(rs.getString("hashed_password"));
+        userLogin.setPassword(rs.getString("hashed_password"));
         userLogin.setRole(rs.getString("role"));
         userLogin.setActive(rs.getBoolean("is_active"));
         return userLogin;

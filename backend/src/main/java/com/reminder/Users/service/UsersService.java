@@ -50,13 +50,15 @@ public class UsersService {
     }
 
     @Transactional
-    public void newUserActivation(UserCrm userDetails) {
+    public void newUserActivation(UserCrm userDetails) throws Exception{
         validateCrmDetails(userDetails);
         userDetails.setServiceLevel(determineServiceLevel(userDetails.getEmail(), userDetails.getMobile()));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails authUser = (CustomUserDetails) auth.getPrincipal();
         String userName = authUser.getUsername();
         Long id = usersRepository.activate(userDetails);
+        if (id ==null)
+            throw new Exception("CRITICAL: Something or someone seriously F&** the system");
         usersRepository.updateLoginUserId(userName, id);
     }
 

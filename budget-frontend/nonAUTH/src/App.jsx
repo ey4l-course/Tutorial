@@ -7,7 +7,7 @@ import "./assets/Login.css";
 function Shell() {
   const nav = useNavigate();
   const [checking, setChecking] = useState(true); // while we ask /auth/me once
-
+  const baseUrl = "http://51.4.105.38/"
   useEffect(() => {
     (async () => {
       try {

@@ -2,19 +2,27 @@ import React from "react";
 import { useState } from "react";
 import "../assets/Login.css"
 import { Link } from "react-router-dom";
-
-const testUser = {"userName": "test_user", "hashedPassword": "Hashed V@lidP@ssw0rd"}
+import { mockLogin } from "../temp/MockServer";
 
 const App = () => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
-  const passwordHashHandler = (rawPassword) => {
-    return "Hashed " + rawPassword;
-  }
-  const HandleOnSubmit = (e) => {
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState("");
+
+  const HandleOnSubmit = async(e) => {
     e.preventDefault();
-    if (userName === testUser.userName && passwordHashHandler(password) === testUser.hashedPassword)
-      console.log("Successful login")
+    setPending(true);
+    setError("");
+
+    try {
+      const { role } = await mockLogin({user_name: userName, password});
+      window.location.replace(role === "admin" ? "/admin/" : "/user/");
+    }catch (err) {
+      setError(err.message);
+    }finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -32,7 +40,10 @@ const App = () => {
           <label htmlFor="Password">Password:</label>
           <input type="password" name="Password" onChange={e => setPassword(e.target.value)}/>
         </div>
-        <button type="submit">Login</button>
+        <button type="submit" disabled={pending || userName.length < 4 || password.length < 8 || !error === ""}>
+          {pending ? "Signing you in..." : "Login"}
+        </button>
+        {error && <div className="form-error" role="alert">{error}</div>}
         <footer>Not register? <span><Link to='/register'>Register new account</Link></span></footer>
         
       </form>

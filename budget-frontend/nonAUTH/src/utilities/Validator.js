@@ -1,5 +1,5 @@
 export const validateUsername = (val) =>
-  /^(?!.*\s)[a-zA-Z0-9._\-$^~]{5,20}$/.test(val);
+  /^(?!.*\s)[a-zA-Z0-9._\-$^~]{1,20}$/.test(val);
 
 export const checkPasswordRules = (val) => ({
   capital: /[A-Z]/.test(val),

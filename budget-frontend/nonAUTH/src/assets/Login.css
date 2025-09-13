@@ -94,3 +94,14 @@ footer span {
 footer span:hover {
   text-decoration: underline;
 }
+
+.form-error {
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  border: 1px solid #f5c2c0;
+  border-radius: 6px;
+  background: #fdecec;
+  color: #9a1a1a;
+  font-size: 0.9rem;
+  text-align: center;
+}

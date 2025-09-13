@@ -36,6 +36,7 @@ public class UsersController {
                     "refreshToken", response.getRefreshToken()));
         }catch (IllegalArgumentException e) {
             contextDTO.setOutcome("[REJECTED] status 400, " + e.getMessage());
+            String uuid = logUtil.securityLog(e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }catch (AccessDeniedException e){
             contextDTO.setOutcome("[REJECTED] status 403, " + e.getMessage());
@@ -62,8 +63,7 @@ public class UsersController {
         }
     }
 
-    @PreAuthorize("hasRole('user') or hasRole('admin') or hasRole(app)")
-    @PostMapping("/auth/login")
+    @PostMapping("/login")
     public ResponseEntity<?> login (@RequestBody UserLogin user) {
         try {
             TokensDTO tokens = usersService.loginService (user);

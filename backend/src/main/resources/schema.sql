@@ -18,11 +18,11 @@ CREATE TABLE transactions_table (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     txn_time TIMESTAMP NOT NULL,
-    description VARCHAR(20) NOT NULL,  --Name of shop
+    description VARCHAR(20) NOT NULL,
     amount DECIMAL(12, 2) NOT NULL,
     category_id BIGINT NOT NULL,
-    category_source VARCHAR(30), --How source was determined
-    unique_weight INT DEFAULT 0, --How is it counted in global classification (only counts if category changes)
+    category_source VARCHAR(30),
+    unique_weight INT DEFAULT 0,
     payment_method VARCHAR(20) NOT NULL,
     comment VARCHAR(50),
     FOREIGN KEY (user_id) REFERENCES user_crm(id) ON DELETE CASCADE,
@@ -34,7 +34,7 @@ CREATE TABLE user_transaction_classification (
     user_id BIGINT NOT NULL,
     description VARCHAR(20) NOT NULL,
     category_id BIGINT NOT NULL,
-    regular BOOLEAN NOT NULL, --Weather or not this transaction repetitive
+    regular BOOLEAN NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user_crm(id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES transaction_categories(id)
 );
@@ -44,8 +44,7 @@ CREATE TABLE global_transaction_classification (
     description VARCHAR(20) NOT NULL,
     category_id BIGINT NOT NULL,
     regular BOOLEAN NOT NULL,
---    is_default BOOLEAN  Maybe used to determine periodically and avoid frequent changes
-    vote_count BIGINT DEFAULT 0, --Count of description/category combination
+    vote_count BIGINT DEFAULT 0,
     FOREIGN KEY (category_id) REFERENCES transaction_categories(id)
 );
 

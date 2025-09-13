@@ -44,6 +44,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             contextDTO.setIp("[Unresolved]" + e.getMessage() + "LogID: " + uuid);
         }
 
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())){
+            System.out.println("OPTIONS filter hit");
+            filterChain.doFilter(request, response);
+            return;
+        }
         //If path is in exclusion list skip all validations
         if (authService.validateUri(request.getRequestURI())){
             filterChain.doFilter(request, response);

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRef } from "react";
 import { validateEmail, validateName } from "../utilities/Validator";
 import '../assets/Register.css'
+import { authorizedFetch } from "../api/authClient";
 
 export const Details = ({OnClickButton}) => {
     const [givenName, setGivenName] = useState("");
@@ -27,13 +28,23 @@ export const Details = ({OnClickButton}) => {
         }, 150)
     }
     const trackEmail = (val) => {setEmailValid(validateEmail(val))};
-    const handleSubmit = (e) =>{
-        e.preventDefault();
-        console.log("Fetch POST /register")
+    const handleSubmit = (ev) => {
+        console.log(`e = ${ev}, type = ${typeof(ev)}`)
+        ev.preventDefault();
+        authorizedFetch ("/auth/activate", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                "givenName": givenName,
+                "surname": surname,
+                "email": email,
+                "mobile": mobile
+            })            
+        });
         OnClickButton();
     }
     return (
-        <form action={handleSubmit}>
+        <form onSubmit={handleSubmit}>
             <div className="form-fields">
                 <input type="text"
                 value = {givenName}

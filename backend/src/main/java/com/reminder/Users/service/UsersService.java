@@ -51,6 +51,7 @@ public class UsersService {
 
     @Transactional
     public void newUserActivation(UserCrm userDetails) {
+//        System.out.println(userDetails.toString());
         validateCrmDetails(userDetails);
         userDetails.setServiceLevel(determineServiceLevel(userDetails.getEmail(), userDetails.getMobile()));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();

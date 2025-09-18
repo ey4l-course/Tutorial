@@ -24,7 +24,7 @@ export const setHeaders = (headers = {}) => {
 }
 
 export async function authorizedFetch(path, opts = {}) {
-  const res = await fetch(`${BASE}${path}`, { ...opts, headers: withAuthHeaders(opts.headers) });
+  const res = await fetch(`${BASE}${path}`, { ...opts, headers: setHeaders(opts.headers) });
   return res;
 }
 

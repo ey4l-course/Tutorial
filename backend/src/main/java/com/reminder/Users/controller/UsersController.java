@@ -50,14 +50,21 @@ public class UsersController {
 
     @PreAuthorize("hasRole('user') or hasRole('admin')")
     @PostMapping("/activate")
-    public ResponseEntity<?> newUserDetails (@RequestBody UserCrm userCrm){
+    public ResponseEntity<?> newUserDetails (@RequestBody UserCrm userCrm,
+                                             HttpServletRequest request){
+        RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
         try {
+            contextDTO.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
             usersService.newUserActivation(userCrm);
+            contextDTO.setOutcome("[SUCCESS] status 201, account activated");
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("message", "account activated"));
         }catch (IllegalArgumentException e){
+            String uuid = logUtil.infoLog(contextDTO.getUserName(), e.getMessage());
+            contextDTO.setOutcome("[REJECTED] status 400, " + e.getMessage() + "ref: " + uuid);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }catch (Exception e){
             String uuid = logUtil.error(e);
+            contextDTO.setOutcome("[REJECTED] status 500, " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }

@@ -11,7 +11,7 @@ export const Credentials = ({onClickNext}) => {
     const [trackPwdRules, setTrackPwdRules] = useState(
         {capital:false, small:false, digit: false, symbol: false, length:false}
     );
-    const url = "http://51.4.105.38/auth";
+    const baseUrl = import.meta.env.VITE_API_BASE;
     const [pending, setPending] = useState(false);
     const [error, setError] = useState("");
     const trackUserName = (val) => setUserNameValid(validateUsername(val));
@@ -26,7 +26,7 @@ export const Credentials = ({onClickNext}) => {
         setPending(true);
         setError("");
         try {
-            const res = await fetch (url, {
+            const res = await fetch (`${baseUrl}/auth`, {
                 method: "POST", 
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({

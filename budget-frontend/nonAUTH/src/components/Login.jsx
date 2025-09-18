@@ -2,7 +2,7 @@ import React from "react";
 import { useState } from "react";
 import "../assets/Login.css"
 import { Link } from "react-router-dom";
-import { mockLogin } from "../temp/MockServer";
+import { login } from "../api/authClient";
 
 const App = () => {
   const [userName, setUserName] = useState("");
@@ -14,15 +14,7 @@ const App = () => {
     e.preventDefault();
     setPending(true);
     setError("");
-
-    try {
-      const { role } = await mockLogin({user_name: userName, password});
-      window.location.replace(role === "admin" ? "/admin/" : "/user/");
-    }catch (err) {
-      setError(err.message);
-    }finally {
-      setPending(false);
-    }
+    login ({userName, password})
   }
 
   return (
@@ -40,15 +32,15 @@ const App = () => {
           <label htmlFor="Password">Password:</label>
           <input type="password" name="Password" onChange={e => setPassword(e.target.value)}/>
         </div>
-        <button type="submit" disabled={pending || userName.length < 4 || password.length < 8 || !error === ""}>
-          {pending ? "Signing you in..." : "Login"}
-        </button>
+        <div className="buttons">
+          <button type="submit" disabled={pending || userName.length < 4 || password.length < 8 || !error === ""}>
+            {pending ? "Signing you in..." : "Login"}
+          </button>
+        </div>
         {error && <div className="form-error" role="alert">{error}</div>}
         <footer>Not register? <span><Link to='/register'>Register new account</Link></span></footer>
-        
       </form>
     </div>
   )
 }
-
 export default App;

@@ -57,7 +57,7 @@ public class UsersController {
         try {
             contextDTO.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
             usersService.newUserActivation(userCrm);
-            contextDTO.setOutcome("[SUCCESS] status 201, account activated");
+            contextDTO.setOutcome("[SUCCESS] status 202, account activated");
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("message", "account activated"));
         }catch (IllegalArgumentException e){
             String uuid = logUtil.infoLog(contextDTO.getUserName(), e.getMessage());

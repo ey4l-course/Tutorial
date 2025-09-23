@@ -6,13 +6,13 @@ import com.reminder.security.CustomUserDetails;
 import com.reminder.Users.utilities.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -62,13 +62,18 @@ public class UsersService {
     }
 
     public TokensDTO loginService(UserLogin user) {
-        UserLogin savedUser = usersRepository.getUserByUserName(user.getUserName());
-        if (!savedUser.isActive())
-            throw new InvalidParameterException("");
-        if (!encoder.matches(user.getHashedPassword(), savedUser.getHashedPassword()))
-            throw new AccessDeniedException("Invalid password");
-        return new TokensDTO(jwtUtil.generateJwtToken(savedUser.getUserName(), savedUser.getRole()),
-                jwtUtil.generateRefreshToken(savedUser.getUserName(), savedUser.getRole()));
+        try {
+            UserLogin savedUser = usersRepository.getUserByUserName(user.getUserName());
+            if (!encoder.matches(user.getHashedPassword(), savedUser.getHashedPassword()))
+                throw new AccessDeniedException("Invalid password");
+            TokensDTO tokens = new TokensDTO(jwtUtil.generateJwtToken(savedUser.getUserName(), savedUser.getRole()),
+                    jwtUtil.generateRefreshToken(savedUser.getUserName(), savedUser.getRole()));
+            if (!savedUser.isActive())
+                tokens.setFlag(false);
+            return tokens;
+        }catch (InvalidDataAccessApiUsageException e){
+            throw new AccessDeniedException("User does not exist");
+        }
     }
 
     public void updateMyProfile(Long userId, UserUpdateDTO detailsDTO) {

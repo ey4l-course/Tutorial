@@ -21,12 +21,12 @@ public class SecurityConfig {
                                                     JwtAuthenticationFilter jwtAuthenticationFilter,
                                                     CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
         http
-                .csrf(csrf ->csrf.disable())
+                .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admin/**").hasRole("admin")
                         .requestMatchers("/txn/**").hasAnyRole("user", "admin")
-                        .requestMatchers("/auth", "/h2-console/**").permitAll()
+                        .requestMatchers("/auth", "/auth/login", "/h2-console/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

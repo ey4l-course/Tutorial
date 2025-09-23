@@ -1,36 +1,26 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import Login from "./components/Login.jsx"; // your form UI
+import Login from "./components/Login.jsx";
 import { Register } from "./components/Register.jsx";
 import "./assets/Login.css";
 
 function Shell() {
   const nav = useNavigate();
-  const [checking, setChecking] = useState(true); // while we ask /auth/me once
-  const baseUrl = "http://51.4.105.38/"
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/auth/me", { credentials: "include" });
-        if (res.ok) {
-          const { role } = await res.json(); // { role: "admin" | "user" }
-          nav(role === "admin" ? "/admin/" : "/app/", { replace: true });
-          return;
-        }
-      } catch (err) {
-        console.error("auth check failed", err);
-      } finally {
-        setChecking(false);
-      }
-    })();
-  }, [nav]);
+  const [checking, setChecking] = useState(true);
+  const BASE = import.meta.env.VITE_API_BASE;
+
+  useEffect(()=>{
+    const a = sessionStorage.getItem("bt_access");
+    const r = sessionStorage.getItem("bt_refresh");
+    if (a && r)
+      window.location.replace("/app");
+    setChecking(false);
+  }, [])
 
   if (checking) {
-    // tiny non-blocking placeholder; no spinner needed
     return <div style={{ textAlign: "center", marginTop: 24 }}>Checking session…</div>;
   }
 
-  // Not authenticated -> show auth routes
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
@@ -42,9 +32,8 @@ function Shell() {
 }
 
 export default function App() {
-  // Top-level router for the nonAuth app
   return (
-    <BrowserRouter /* basename="/" if deployed at root of this app */>
+    <BrowserRouter>
       <Shell />
     </BrowserRouter>
   );

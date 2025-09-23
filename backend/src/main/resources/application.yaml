@@ -53,3 +53,4 @@ jwt:
   excludedPaths:
     - "/h2-console/**"
     - "/auth"
+    - "/auth/login"

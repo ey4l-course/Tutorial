@@ -2,14 +2,13 @@ import React from "react";
 import { useState } from "react";
 import { Credentials } from "./Credentials"
 import { Details } from "./Details";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import '../assets/Register.css'
 
-// const credentials = {"userName" : "", "Password": ""}; //Temp - will be replaced with POST
-// const personalDetails = {"userId":"", "givenName":"","surename":"", "email":"", "mobile":""}; //Temp - will be replaced with POST
-
 export const Register = () => {
-    const [formStatus, setFormStatus] = useState("credentials")
+    const [sp] = useSearchParams();
+    const initial = sp.get("show") ?? "credentials";
+    const [formStatus, setFormStatus] = useState(initial);
     return(
         <div className="main">
             <div className="title">

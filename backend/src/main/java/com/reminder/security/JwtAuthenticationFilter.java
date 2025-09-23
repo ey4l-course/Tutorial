@@ -45,38 +45,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         //If path is in exclusion list skip all validations
-        if (authService.validateUri(request.getRequestURI())){
-            filterChain.doFilter(request, response);
-            return;
-        }
-        //Initialize responseDTO and set tokens
-        AuthResponseDTO responseDTO = new AuthResponseDTO();
-        responseDTO.setAccessToken(request.getHeader(jwtConfig.getHeader().getAccessHeader()));
-        responseDTO.setRefreshToken(request.getHeader(jwtConfig.getHeader().getRefreshHeader()));
-
-        //Set username and status code to responseDTO
-        //May set error message
-        authService.TokenUserNameHandler (responseDTO, jwtConfig.getHeader().getPrefix());
-        contextDTO.setUserName(responseDTO.getUserName());
-        if (responseDTO.getStatusCode() >= 200 && responseDTO.getStatusCode() <= 299){
-            authService.setSecurityContext(responseDTO);
-        }
-
-        //If error detected set context outcome and EOL and log it, write servletResponse and commit it
-        if (responseDTO.getStatusCode() < 200 || responseDTO.getStatusCode() > 299) {
-            contextDTO.setOutcome("[REJECTED] at filter, status: " + responseDTO.getStatusCode() + ", " + responseDTO.getErrorMessage());
-            contextDTO.setEndProcess(Instant.now());
-            logger.logRequest(contextDTO);
-            response.setStatus(responseDTO.getStatusCode());
-            response.getWriter().write(responseDTO.getErrorMessage());
-            return;
-        }
-
-        if (responseDTO.getAccessToken() != null && !responseDTO.getAccessToken().isEmpty()){
-            response.setHeader("Authorization", responseDTO.getAccessToken());
-            response.setHeader("Refresh", responseDTO.getRefreshToken());
-        }
+        boolean isExcluded = authService.validateUri(request.getRequestURI());
         try {
+            if (!isExcluded) {
+                //Initialize responseDTO and set tokens
+                AuthResponseDTO responseDTO = new AuthResponseDTO();
+                responseDTO.setAccessToken(request.getHeader(jwtConfig.getHeader().getAccessHeader()));
+                responseDTO.setRefreshToken(request.getHeader(jwtConfig.getHeader().getRefreshHeader()));
+
+                //Set username and status code to responseDTO
+                //May set error message
+                authService.TokenUserNameHandler(responseDTO, jwtConfig.getHeader().getPrefix());
+                contextDTO.setUserName(responseDTO.getUserName());
+                if (responseDTO.getStatusCode() >= 200 && responseDTO.getStatusCode() <= 299) {
+                    authService.setSecurityContext(responseDTO);
+                }
+
+                //If error detected set context outcome and EOL and log it, write servletResponse and commit it
+                if (responseDTO.getStatusCode() < 200 || responseDTO.getStatusCode() > 299) {
+                    contextDTO.setOutcome("[REJECTED] at filter, status: " + responseDTO.getStatusCode() + ", " + responseDTO.getErrorMessage());
+                    contextDTO.setEndProcess(Instant.now());
+                    logger.logRequest(contextDTO);
+                    response.setStatus(responseDTO.getStatusCode());
+                    response.getWriter().write(responseDTO.getErrorMessage());
+                    return;
+                }
+
+                if (responseDTO.getAccessToken() != null && !responseDTO.getAccessToken().isEmpty()) {
+                    response.setHeader("Authorization", responseDTO.getAccessToken());
+                    response.setHeader("Refresh", responseDTO.getRefreshToken());
+                }
+            }
             filterChain.doFilter(request, response);
         }finally {
             contextDTO.setEndProcess(Instant.now());

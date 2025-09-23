@@ -20,7 +20,7 @@ export const Register = () => {
                     onClickNext={() => setFormStatus("PersonalDetails")}
                     />) : (
                         <Details
-                        OnClickButton={() => setFormStatus("credentials")}
+                        OnClickBack={() => setFormStatus("credentials")}
                         />
                     )}
                 <footer>Already have an account? <span><Link to='/Login'>Login</Link></span></footer>

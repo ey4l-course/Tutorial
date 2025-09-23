@@ -5,7 +5,6 @@ import { Register } from "./components/Register.jsx";
 import "./assets/Login.css";
 
 function Shell() {
-  const nav = useNavigate();
   const [checking, setChecking] = useState(true);
   const BASE = import.meta.env.VITE_API_BASE;
 

@@ -84,7 +84,7 @@ public class RegistrationIntegrationTest {
         UserLogin savedUser = repo.getUserByUserName("ValidUser12");
         assertNotNull(savedUser);
         assertEquals("ValidUser12", savedUser.getUserName());
-        assertTrue(encoder.matches("V@lidPa$$w0rd", savedUser.getPassword()));
+        assertTrue(encoder.matches("V@lidPa$$w0rd", savedUser.getHashedPassword()));
         assertTrue(savedUser.isActive());
     }
 
@@ -234,4 +234,39 @@ public class RegistrationIntegrationTest {
                 }))
                 .andExpect(status().isForbidden());
     }
+
+    /*
+    Consider unit test instead
+     */
+
+//    @Test
+//    void populatedContextCollision () throws Exception{
+//        Authentication fakeAuth = new UsernamePasswordAuthenticationToken("fakeUser", null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
+//        SecurityContext fakeContext = SecurityContextHolder.createEmptyContext();
+//        fakeContext.setAuthentication(fakeAuth);
+//
+//        String body = "{\"userName\":\"ValidUser12\",\"password\":\"V@lidPa$$w0rd\"}";
+//        String crmBody = "{\"givenName\":\"John\", \"surname\":\"Doe\", \"email\":\"johndoe@yahoo.com\", \"mobile\":\"0523214564\"}";
+//
+//        MvcResult result = mockMvc.perform(post("/auth")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(body))
+//                .andExpect(status().isCreated())
+//                .andReturn();
+//
+//        String accessToken = JsonPath.read(result.getResponse().getContentAsString(), "$.accessToken");
+//        String refreshToken = JsonPath.read(result.getResponse().getContentAsString(), "$.refreshToken");
+//
+//        mockMvc.perform(post("/auth/activate")
+//                .contentType(MediaType.APPLICATION_JSON)
+//                .content(crmBody)
+//                .with(request -> {
+//                    request.addHeader("Authorization", "Bearer " + accessToken);
+//                    request.addHeader("Refresh", "Bearer " + refreshToken);
+//                    SecurityContextHolder.setContext(fakeContext);
+//                    return request;
+//                }))
+//                .andDo(MockMvcResultHandlers.print())
+//                .andExpect(status().is2xxSuccessful());
+//    }
 }

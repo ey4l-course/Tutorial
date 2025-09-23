@@ -33,9 +33,10 @@ public class TransactionRepository {
     private String GLOBAL_DEFINED;
 
     public void save (Transaction transaction){
+            KeyHolder keyHolder = new GeneratedKeyHolder();
             String sql = "INSERT INTO " + TABLE + " (user_id, txn_time, description, amount, category_id, category_source, unique_weight, payment_method, comment)VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             jdbcTemplate.update(con -> {
-                PreparedStatement ps = con.prepareStatement(sql);
+                PreparedStatement ps = con.prepareStatement(sql, new String[] {"id"});
                 ps.setLong(1, transaction.getUserId());
                 ps.setTimestamp(2, Timestamp.from(Instant.now()));
                 ps.setString(3, transaction.getDescription());
@@ -46,7 +47,7 @@ public class TransactionRepository {
                 ps.setString(8, transaction.getPaymentMethod());
                 ps.setString(9, transaction.getComment());
                 return ps;
-            });
+            }, keyHolder);
     }
 
     public void addComment (Long id, String comment){

@@ -32,16 +32,18 @@ public class UsersRepository {
     @Value("${app.tables.usersDetails}")
     private String CRM;
 
-    public void save (UserLogin user){
+    public Long save (UserLogin user){
         try {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
             String sql = String.format("INSERT INTO %s (user_name, hashed_password, role) VALUES (?, ?, ?)", LOGIN);
             jdbcTemplate.update(con -> {
-                PreparedStatement ps = con.prepareStatement(sql);
+                PreparedStatement ps = con.prepareStatement(sql, new String[]{"id"});
                 ps.setString(1, user.getUserName());
-                ps.setString(2, user.getPassword());
+                ps.setString(2, user.getHashedPassword());
                 ps.setString(3, user.getRole());
                 return ps;
-            });
+            }, keyHolder);
+            return keyHolder.getKeyAs(Long.class);
         }catch (DataIntegrityViolationException e){
             throw new IllegalArgumentException("User-name already taken");
         }
@@ -68,8 +70,7 @@ public class UsersRepository {
             ps.setTimestamp(6, Timestamp.from(Instant.now()));
             return ps;
         }, keyHolder);
-        Number key = keyHolder.getKey();
-        return (key != null) ? key.longValue() : null;
+        return keyHolder.getKeyAs(Long.class);
     }
 
     public void updateLoginUserId(String userName, Long id) {
@@ -163,7 +164,7 @@ public class UsersRepository {
             jdbcTemplate.update(con -> {
                 PreparedStatement ps = con.prepareStatement(sql, new String[]{"id"});
                 ps.setString(1, user.getUserName());
-                ps.setString(2, user.getPassword());
+                ps.setString(2, user.getHashedPassword());
                 ps.setString(3, user.getRole());
                 ps.setBoolean(4, user.isActive());
                 return ps;

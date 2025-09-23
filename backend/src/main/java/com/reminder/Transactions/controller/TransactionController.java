@@ -40,7 +40,7 @@ public class TransactionController {
                 throw new IllegalArgumentException("transactions is empty");
             transactionService.newTransaction(transactions, userId);
             contextDTO.setOutcome("[SUCCESS] status: 201");
-            return new ResponseEntity<>(HttpStatus.CREATED);
+            return new ResponseEntity<>(HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             String uuid = logUtil.infoLog("User", e.getMessage());
             contextDTO.setOutcome("[REJECTED] status: 400, " + e.getMessage());

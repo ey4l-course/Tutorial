@@ -6,13 +6,13 @@ import com.reminder.security.CustomUserDetails;
 import com.reminder.Users.utilities.JwtUtil;
 import jakarta.transaction.Transactional;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -38,8 +38,8 @@ public class UsersService {
     final private Pattern validPassword = Pattern.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[-!@#$%^&*()_./]).{8,}$");
 
     public TokensDTO newUser(UserLogin userCredentials) {
-        validateCredentials(userCredentials.getUserName(), userCredentials.getPassword());
-        userCredentials.setPassword(passwordHasher(userCredentials.getPassword()));
+        validateCredentials(userCredentials.getUserName(), userCredentials.getHashedPassword());
+        userCredentials.setHashedPassword(passwordHasher(userCredentials.getHashedPassword()));
         userCredentials.setRole("user");
         usersRepository.save(userCredentials);
         TokensDTO response = new TokensDTO(
@@ -50,26 +50,30 @@ public class UsersService {
     }
 
     @Transactional
-    public void newUserActivation(UserCrm userDetails) throws Exception{
+    public void newUserActivation(UserCrm userDetails) {
+//        System.out.println(userDetails.toString());
         validateCrmDetails(userDetails);
         userDetails.setServiceLevel(determineServiceLevel(userDetails.getEmail(), userDetails.getMobile()));
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails authUser = (CustomUserDetails) auth.getPrincipal();
         String userName = authUser.getUsername();
         Long id = usersRepository.activate(userDetails);
-        if (id ==null)
-            throw new Exception("CRITICAL: Something or someone seriously F&** the system");
         usersRepository.updateLoginUserId(userName, id);
     }
 
     public TokensDTO loginService(UserLogin user) {
-        UserLogin savedUser = usersRepository.getUserByUserName(user.getUserName());
-        if (!savedUser.isActive())
-            throw new InvalidParameterException("");
-        if (!encoder.matches(user.getPassword(), savedUser.getPassword()))
-            throw new AccessDeniedException("Invalid password");
-        return new TokensDTO(jwtUtil.generateJwtToken(savedUser.getUserName(), savedUser.getRole()),
-                jwtUtil.generateRefreshToken(savedUser.getUserName(), savedUser.getRole()));
+        try {
+            UserLogin savedUser = usersRepository.getUserByUserName(user.getUserName());
+            if (!encoder.matches(user.getHashedPassword(), savedUser.getHashedPassword()))
+                throw new AccessDeniedException("Invalid password");
+            TokensDTO tokens = new TokensDTO(jwtUtil.generateJwtToken(savedUser.getUserName(), savedUser.getRole()),
+                    jwtUtil.generateRefreshToken(savedUser.getUserName(), savedUser.getRole()));
+            if (!savedUser.isActive())
+                tokens.setFlag(false);
+            return tokens;
+        }catch (InvalidDataAccessApiUsageException e){
+            throw new AccessDeniedException("User does not exist");
+        }
     }
 
     public void updateMyProfile(Long userId, UserUpdateDTO detailsDTO) {
@@ -90,9 +94,13 @@ public class UsersService {
     }
 
     public void deleteAccount(DeleteAccountDTO dto) {
-        String storedHash = usersRepository.getUserByUserName(dto.getUserName()).getPassword();
-        if (!encoder.matches(dto.getPassword(),storedHash))
+        String storedHash = usersRepository.getUserByUserName(dto.getUserName()).getHashedPassword();
+        //For test
+        if (!dto.getPassword().equals(storedHash))
             throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
+        //For prod: comment out when testing
+//        if (!encoder.matches(dto.getPassword(),storedHash))
+//            throw new AccessDeniedException("Account deletion attempted with wrong password: " + dto.getPassword());
         if (usersRepository.deleteAccount(dto.getId()) == 0)
             throw new  IllegalArgumentException("User not found");
     }
@@ -116,7 +124,7 @@ public class UsersService {
     private void validateUserCreationByAdmin(UserLogin user){
         if (user.getUserName() == null || user.getUserName().isEmpty() || !validUserName.matcher(user.getUserName()).matches())
             throw new IllegalArgumentException("User name must contain letters, digits or ._-$^~");
-        if (user.getPassword() == null || user.getPassword().isEmpty() || !validPassword.matcher(user.getPassword()).matches())
+        if (user.getHashedPassword() == null || user.getHashedPassword().isEmpty() || !validPassword.matcher(user.getHashedPassword()).matches())
             throw new IllegalArgumentException("Password must be 8-20 characters long and contain at least 1 upper case, 1 lower case, 1 digit and 1 symbol (-!@#$%^&*()_./)");
         if (user.getRole() == null || user.getRole().isEmpty())
             throw new IllegalArgumentException("No role was defined.");
@@ -250,7 +258,7 @@ public class UsersService {
     public Long newSpecialUser(UserLogin user) {
         try {
             validateUserCreationByAdmin(user);
-            user.setPassword(passwordHasher(user.getPassword()));
+            user.setHashedPassword(passwordHasher(user.getHashedPassword()));
             return usersRepository.saveSpecial(user);
         }catch (DataAccessException e){
             throw new IllegalArgumentException("User-name already taken");

@@ -36,5 +36,4 @@ build/
 *.log*
 /logs/*
 
-###Ignore front-end for this branch#
-/budget-frontend/
+

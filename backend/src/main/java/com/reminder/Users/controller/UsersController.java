@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.InvalidParameterException;
 import java.util.Map;
 
 @RestController
@@ -36,7 +37,6 @@ public class UsersController {
                     "refreshToken", response.getRefreshToken()));
         }catch (IllegalArgumentException e) {
             contextDTO.setOutcome("[REJECTED] status 400, " + e.getMessage());
-            String uuid = logUtil.securityLog(e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }catch (AccessDeniedException e){
             contextDTO.setOutcome("[REJECTED] status 403, " + e.getMessage());
@@ -51,26 +51,49 @@ public class UsersController {
 
     @PreAuthorize("hasRole('user') or hasRole('admin')")
     @PostMapping("/activate")
-    public ResponseEntity<?> newUserDetails (@RequestBody UserCrm userCrm){
+    public ResponseEntity<?> newUserDetails (@RequestBody UserCrm userCrm,
+                                             HttpServletRequest request){
+        RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
         try {
+            contextDTO.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
             usersService.newUserActivation(userCrm);
+            contextDTO.setOutcome("[SUCCESS] status 201, account activated");
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("message", "account activated"));
         }catch (IllegalArgumentException e){
+            String uuid = logUtil.infoLog(contextDTO.getUserName(), e.getMessage());
+            contextDTO.setOutcome("[REJECTED] status 400, " + e.getMessage() + "ref: " + uuid);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }catch (Exception e){
             String uuid = logUtil.error(e);
+            contextDTO.setOutcome("[REJECTED] status 500, " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login (@RequestBody UserLogin user) {
+    public ResponseEntity<?> login (@RequestBody UserLogin user,
+                                    HttpServletRequest request) {
+        RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
+        TokensDTO tokens = new TokensDTO();
         try {
-            TokensDTO tokens = usersService.loginService (user);
+            contextDTO.setUserName(user.getUserName());
+            tokens = usersService.loginService(user);
+            if (!tokens.isFlag())
+                throw new InvalidParameterException("account activation required");
             logUtil.infoLog(user.getUserName(), "Has successfully logged in");
+            contextDTO.setOutcome("[SUCCESS] status 200");
             return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "Login successful",
                     "accessToken", tokens.getAccessToken(),
                     "refreshToken", tokens.getRefreshToken()));
+        }catch (InvalidParameterException e) {
+            contextDTO.setOutcome("[REJECTED] status 403, " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", e.getMessage(),
+                    "accessToken", tokens.getAccessToken(),
+                    "refreshToken", tokens.getRefreshToken()));
+        }catch (AccessDeniedException e){
+            contextDTO.setOutcome("[REJECTED] status 401, " + e.getMessage());
+            logUtil.securityLog(e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         }catch (Exception e){
             String uuid = logUtil.error(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Mmmm this is awkward... Shouldn't happen. Please raise a ticket. log ID: " + uuid);

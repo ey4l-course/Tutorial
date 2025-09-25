@@ -1,4 +1,4 @@
-package com.reminder.Budget;
+package com.reminder;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

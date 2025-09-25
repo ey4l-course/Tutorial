@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### additional Ignores ###
+*.log*
+/logs/*
+
+

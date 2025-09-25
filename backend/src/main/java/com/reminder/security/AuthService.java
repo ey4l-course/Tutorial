@@ -48,6 +48,7 @@ public class AuthService {
                 logUtil.infoLog(dto.getUserName(), e.getMessage() + "New token successfully generated");
                 dto.setAccessToken(jwtUtil.generateJwtToken(dto.getUserName(), dto.getRole()));
                 dto.setRefreshToken(jwtUtil.generateRefreshToken(dto.getUserName(), dto.getRole()));
+                dto.setErrorMessage("tokens refreshed");
                 dto.setStatusCode(200);
             }catch (ExpiredJwtException ex){
                 logUtil.infoLog(dto.getUserName(), e.getMessage() + "Refresh token expired");

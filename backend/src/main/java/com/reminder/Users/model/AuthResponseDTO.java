@@ -1,7 +1,5 @@
 package com.reminder.Users.model;
 
-import java.util.HashMap;
-
 public class AuthResponseDTO {
     private String accessToken;
     private String refreshToken;

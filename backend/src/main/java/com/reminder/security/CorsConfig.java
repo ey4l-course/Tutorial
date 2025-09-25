@@ -15,7 +15,7 @@ public class CorsConfig {
         var conf = new CorsConfiguration();
         conf.setAllowedOrigins(List.of("http://localhost:5173"));
         conf.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        conf.setAllowedHeaders(List.of("Content-Type", "Authorization", "Refresh"));
+        conf.setAllowedHeaders(List.of("Content-Type", "Authorization", "Refresh", "Cookie", "Accept"));
         conf.setAllowCredentials(true);
         conf.setMaxAge(3600L);
         var source = new UrlBasedCorsConfigurationSource();

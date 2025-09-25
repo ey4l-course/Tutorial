@@ -3,8 +3,10 @@ package com.reminder.Users.controller;
 import com.reminder.Users.model.*;
 import com.reminder.Users.service.UsersService;
 import com.reminder.security.CustomUserDetails;
+import com.reminder.utilities.CookieUtil;
 import com.reminder.utilities.LogUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,18 +25,22 @@ public class UsersController {
     LogUtil logUtil;
     @Autowired
     UsersService usersService;
+    @Autowired
+    CookieUtil cookieUtil;
 
     @PostMapping
     public ResponseEntity<?> newUserCredentials (@RequestBody UserLogin userLogin,
-                                                 HttpServletRequest request){
+                                                 HttpServletRequest request,
+                                                 HttpServletResponse response){
         RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
         try {
             contextDTO.setUserName(userLogin.getUserName());
-            TokensDTO response = usersService.newUser(userLogin);
+            TokensDTO tokens = usersService.newUser(userLogin);
             contextDTO.setOutcome("[SUCCESS] status: 201, User created");
+            cookieUtil.addAuthCookies(response, tokens);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "user created",
-                    "accessToken", response.getAccessToken(),
-                    "refreshToken", response.getRefreshToken()));
+                    "accessToken", tokens.getAccessToken(),
+                    "refreshToken", tokens.getRefreshToken()));
         }catch (IllegalArgumentException e) {
             contextDTO.setOutcome("[REJECTED] status 400, " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
@@ -52,7 +58,8 @@ public class UsersController {
     @PreAuthorize("hasRole('user') or hasRole('admin')")
     @PostMapping("/activate")
     public ResponseEntity<?> newUserDetails (@RequestBody UserCrm userCrm,
-                                             HttpServletRequest request){
+                                             HttpServletRequest request,
+                                             HttpServletResponse response){
         RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
         try {
             contextDTO.setUserName(SecurityContextHolder.getContext().getAuthentication().getName());
@@ -72,7 +79,8 @@ public class UsersController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login (@RequestBody UserLogin user,
-                                    HttpServletRequest request) {
+                                    HttpServletRequest request,
+                                    HttpServletResponse response) {
         RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
         TokensDTO tokens = new TokensDTO();
         try {
@@ -82,6 +90,7 @@ public class UsersController {
                 throw new InvalidParameterException("account activation required");
             logUtil.infoLog(user.getUserName(), "Has successfully logged in");
             contextDTO.setOutcome("[SUCCESS] status 200");
+            cookieUtil.addAuthCookies(response, tokens);
             return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "Login successful",
                     "accessToken", tokens.getAccessToken(),
                     "refreshToken", tokens.getRefreshToken()));

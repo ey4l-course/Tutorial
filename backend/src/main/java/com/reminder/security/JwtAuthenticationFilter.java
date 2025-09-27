@@ -39,17 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        RequestContextDTO contextDTO = new RequestContextDTO(request.getRequestURI(), request.getMethod(), request.getHeader("user-agent"));
-        request.setAttribute("context", contextDTO);
-        try {
-            contextDTO.setIp(IpUtil.ExtractIp(request));
-        } catch (UnknownHostException e) {
-            contextDTO.setIp("[Unresolved]" + e.getMessage());
-        } catch (Exception e) {
-            String uuid = logger.error(e);
-            contextDTO.setIp("[Unresolved]" + e.getMessage() + "LogID: " + uuid);
-        }
-
+        RequestContextDTO contextDTO = (RequestContextDTO) request.getAttribute("context");
         //If path is in exclusion list skip all validations
         boolean isExcluded = authService.validateUri(request.getRequestURI());
         try {

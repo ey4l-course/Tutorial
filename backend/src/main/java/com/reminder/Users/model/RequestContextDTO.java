@@ -1,16 +1,21 @@
 package com.reminder.Users.model;
 
 import java.time.Instant;
+import java.util.Arrays;
 
 public class RequestContextDTO {
+    private String category;
     private String ip;
     private String userAgent;
     private String userName;
     private String method;
     private String entryRoute;
     private String outcome;
+    private int statusCode;
+    private String statusMessage;
     private Instant startProcess;
     private Instant endProcess;
+    private Exception debug;
 //    private String referrer;  ***Possible future enhancement***
 
     public RequestContextDTO(String entryRoute, String method, String userAgent) {
@@ -19,6 +24,14 @@ public class RequestContextDTO {
         this.entryRoute = entryRoute;
         this.userAgent = userAgent;
         this.startProcess = Instant.now();
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public String getIp() {
@@ -69,6 +82,22 @@ public class RequestContextDTO {
         this.outcome = outcome;
     }
 
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    public String getStatusMessage() {
+        return statusMessage;
+    }
+
+    public void setStatusMessage(String statusMessage) {
+        this.statusMessage = statusMessage;
+    }
+
     public Instant getStartProcess() {
         return startProcess;
     }
@@ -83,5 +112,13 @@ public class RequestContextDTO {
 
     public void setEndProcess(Instant endProcess) {
         this.endProcess = endProcess;
+    }
+
+    public Exception getDebug() {
+        return debug;
+    }
+
+    public void setDebug(Exception debug) {
+        this.debug = debug;
     }
 }

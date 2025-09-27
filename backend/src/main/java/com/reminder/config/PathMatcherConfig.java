@@ -1,4 +1,4 @@
-package com.reminder.security;
+package com.reminder.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

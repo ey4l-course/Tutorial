@@ -1,5 +1,7 @@
-package com.reminder.security;
+package com.reminder.config;
 
+import com.reminder.security.CustomAccessDeniedHandler;
+import com.reminder.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
